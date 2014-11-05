@@ -102,6 +102,7 @@ class OLDDCStack {
 		if((current.dc.isTimeout() || current.dc.getConnection().isClosed())) { 
 			if(!current.dc.getConnection().isClosed()){
 				try {
+                    System.out.println("" + System.identityHashCode(current.dc.getConnection()) + " OLDDCStack.clear()");
 		            current.dc.getConnection().close();
 		        } 
 		        catch (SQLException e) {}

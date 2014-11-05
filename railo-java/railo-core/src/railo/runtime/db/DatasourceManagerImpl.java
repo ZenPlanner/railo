@@ -1,9 +1,13 @@
 package railo.runtime.db;
 
 
+import java.lang.reflect.Field;
+import java.net.Socket;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import net.sourceforge.jtds.jdbc.ConnectionJDBC2;
+import net.sourceforge.jtds.jdbc.ConnectionJDBC3;
 import railo.runtime.PageContext;
 import railo.runtime.PageContextImpl;
 import railo.runtime.config.ConfigImpl;
@@ -11,6 +15,7 @@ import railo.runtime.engine.ThreadLocalPageContext;
 import railo.runtime.exp.DatabaseException;
 import railo.runtime.exp.ExceptionHandler;
 import railo.runtime.exp.PageException;
+import railo.runtime.functions.system.SystemCacheClear;
 import railo.runtime.orm.ORMDatasourceConnection;
 import railo.runtime.orm.ORMSession;
 
@@ -46,7 +51,7 @@ public final class DatasourceManagerImpl implements DataSourceManager {
 	public DatasourceConnection getConnection(PageContext pc,DataSource ds, String user, String pass) throws PageException {
 		if(autoCommit)
 			return config.getDatasourceConnectionPool().getDatasourceConnection(pc,ds,user,pass);
-		
+
 		
 		pc=ThreadLocalPageContext.get(pc);
 		DatasourceConnection dc=((PageContextImpl)pc)._getConnection(ds,user,pass);
@@ -55,10 +60,28 @@ public final class DatasourceManagerImpl implements DataSourceManager {
 		//if(!autoCommit) {
             try {
                 if(transConn==null) {
+                    ConnectionJDBC2 con = (ConnectionJDBC2)dc.getConnection();
+
+                    try {
+                        Field socket = ConnectionJDBC2.class.getDeclaredField("socket");
+                        socket.setAccessible(true);
+                        Object sock = socket.get(con);
+                        socket = sock.getClass().getDeclaredField("socket");
+                        socket.setAccessible(true);
+                        Socket s = (Socket)socket.get(sock);
+                        int depth = Thread.currentThread().getStackTrace().length;
+                        System.out.println("con=" + System.identityHashCode(dc.getConnection()) +
+                                " DatasourceManagerImpl=" + System.identityHashCode(this) +
+                                " getConnection(false)");
+                        new Exception(""+s.getLocalPort()).printStackTrace();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 	dc.getConnection().setAutoCommit(false);
 					
                     if(isolation!=Connection.TRANSACTION_NONE)
 					    dc.getConnection().setTransactionIsolation(isolation);
+                    System.out.println("" + System.identityHashCode(this) + " setting con=" + System.identityHashCode(dc.getConnection()));
                     transConn=dc;
     			}
     			else if(!transConn.equals(dc)) {
@@ -67,6 +90,22 @@ public final class DatasourceManagerImpl implements DataSourceManager {
     						"can't use different connections inside a transaction",null,null,dc);
     			}
                 else if(dc.getConnection().getAutoCommit()) {
+                    ConnectionJDBC2 con = (ConnectionJDBC2)dc.getConnection();
+                    try {
+                        Field socket = ConnectionJDBC2.class.getDeclaredField("socket");
+                        socket.setAccessible(true);
+                        Object sock = socket.get(con);
+                        socket = sock.getClass().getDeclaredField("socket");
+                        socket.setAccessible(true);
+                        Socket s = (Socket)socket.get(sock);
+                        int depth = Thread.currentThread().getStackTrace().length;
+                        System.out.println("con=" + System.identityHashCode(dc.getConnection()) +
+                                " DatasourceManagerImpl=" + System.identityHashCode(this) +
+                                " getConnection(false)");
+                        new Exception(""+s.getLocalPort()).printStackTrace();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                     dc.getConnection().setAutoCommit(false);
                 }
             } catch (SQLException e) {
@@ -87,6 +126,7 @@ public final class DatasourceManagerImpl implements DataSourceManager {
                 	
                     if(isolation!=Connection.TRANSACTION_NONE)
 					    dc.getConnection().setTransactionIsolation(isolation);
+                    System.out.println("" + System.identityHashCode(this) + " setting con=" + System.identityHashCode(dc.getConnection()));
                     transConn=dc;
     			}
     			else if(!(transConn instanceof ORMDatasourceConnection)){
@@ -123,6 +163,7 @@ public final class DatasourceManagerImpl implements DataSourceManager {
 	 * @see DataSourceManager#begin()
 	 */
 	public void begin() {
+        System.out.println("" + System.identityHashCode(this) + " Starting transaction...");
 		this.autoCommit=false;
 		this.isolation=Connection.TRANSACTION_NONE;		
 	}
@@ -132,6 +173,7 @@ public final class DatasourceManagerImpl implements DataSourceManager {
 	 * @see DataSourceManager#begin(java.lang.String)
 	 */
 	public void begin(String isolation) {
+        System.out.println("" + System.identityHashCode(this) + " Starting transaction...");
 		this.autoCommit=false;
     	
 		if(isolation.equalsIgnoreCase("read_uncommitted"))
@@ -152,6 +194,7 @@ public final class DatasourceManagerImpl implements DataSourceManager {
 	 */
     public void begin(int isolation) {
     	//print.out("begin:"+autoCommit);
+        System.out.println("" + System.identityHashCode(this) + " Starting transaction...");
     	this.autoCommit=false;
         this.isolation=isolation;
     }
@@ -165,6 +208,7 @@ public final class DatasourceManagerImpl implements DataSourceManager {
         //autoCommit=true;
 		if(transConn!=null) {
 			try {
+                System.out.println("" + System.identityHashCode(transConn.getConnection()) + " DatasourceManagerImpl.rollback");
 				transConn.getConnection().rollback();
 				//transConn.setAutoCommit(true);
 			} 
@@ -199,6 +243,7 @@ public final class DatasourceManagerImpl implements DataSourceManager {
         //autoCommit=true;
 		if(transConn!=null) {
 			try {
+                System.out.println("" + System.identityHashCode(transConn.getConnection()) + " DatasourceManagerImpl.commit");
 				transConn.getConnection().commit();
 				//transConn.setAutoCommit(true);
 			} 
@@ -222,9 +267,13 @@ public final class DatasourceManagerImpl implements DataSourceManager {
 	 * @see DataSourceManager#end()
 	 */
     public void end() {
+        System.out.println("" + System.identityHashCode(this) + " Ending transaction...");
         autoCommit=true;
         if(transConn!=null) {
         	try {
+                int code = System.identityHashCode(transConn.getConnection());
+                System.out.println("" + code + " DatasourceManagerImpl.end(true)");
+                new Exception("" + code).printStackTrace();
             	transConn.getConnection().setAutoCommit(true);
             } 
             catch (SQLException e) {

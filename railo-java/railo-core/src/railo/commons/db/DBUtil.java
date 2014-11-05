@@ -34,8 +34,11 @@ public final class DBUtil {
 		
 		
 		try {
-			
-			if(conn!=null)conn.setAutoCommit(b);
+
+			if(conn!=null) {
+                System.out.println("" + System.identityHashCode(conn) + " DBUtil.setAutoCommitEL(" + b + ")");
+                conn.setAutoCommit(b);
+            }
         } 
         catch (Throwable e) {}
 	}
@@ -49,14 +52,20 @@ public final class DBUtil {
 
 	public static void commitEL(Connection conn) {
 		try {
-			if(conn!=null)conn.commit();
+			if(conn!=null) {
+                System.out.println("" + System.identityHashCode(conn) + " DBUtil.commitEL()");
+                conn.commit();
+            }
 		} 
 		catch (Throwable e) {}
 	}
 
 	public static void setTransactionIsolationEL(Connection conn,int level) {
 		try {
-			if(conn!=null)conn.setTransactionIsolation(level);
+			if(conn!=null) {
+                System.out.println("" + System.identityHashCode(conn) + " DBUtil.setTransactionIsolation()");
+                conn.setTransactionIsolation(level);
+            }
 		} 
 		catch (Throwable e) {}
 	}
@@ -79,12 +88,16 @@ public final class DBUtil {
 
 	public static Connection getConnection(String dsn, String user, String pass) throws SQLException {
 		try {
-    		return DriverManager.getConnection(dsn, user, pass);
+            Connection conn = DriverManager.getConnection(dsn, user, pass);
+            System.out.println("" + System.identityHashCode(conn) + " DBUtil.getConnection()");
+    		return conn;
         } 
         catch (SQLException e) {
         	if(dsn.indexOf('?')!=-1) {
                 String connStr=dsn+"&user="+user+"&password="+pass;
-                return DriverManager.getConnection(connStr);
+                Connection conn = DriverManager.getConnection(connStr);
+                System.out.println("" + System.identityHashCode(conn) + " DBUtil.getConnection()");
+                return conn;
             }
         	else throw e;
         }

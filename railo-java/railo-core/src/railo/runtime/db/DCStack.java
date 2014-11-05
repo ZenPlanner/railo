@@ -33,7 +33,10 @@ class DCStack {
 					}
 					if(dcid!=pcid) {
 						try {
-				    		 if(rtn.getConnection()!=null)rtn.getConnection().close();
+				    		 if(rtn.getConnection()!=null) {
+                                 System.out.println("" + System.identityHashCode(rtn.getConnection()) + " DCStack.close");
+                                 rtn.getConnection().close();
+                             }
 				    	 } 
 				    	 catch (Throwable t) {}
 						return null;

@@ -143,7 +143,10 @@ public class DatasourceConnectionPool {
 		
 		
 		try {
-			if(autoCommit!=null) dc.getConnection().setAutoCommit(autoCommit.booleanValue());
+			if(autoCommit!=null) {
+                System.out.println("" + System.identityHashCode(dc.getConnection()) + " DatasourceConnectionPool.isValid(" + autoCommit.booleanValue() + ")");
+                dc.getConnection().setAutoCommit(autoCommit.booleanValue());
+            }
 		} 
 		catch (Throwable t) {return false;}
 		
