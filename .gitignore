@@ -29,3 +29,12 @@ va specific
 *.DS_Store
 *.swp
 *.out
+
+out
+web/WEB-INF
+*.patch
+*.ipr
+*.iws
+*.log
+*.iml
+*.jar
