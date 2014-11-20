@@ -41,6 +41,9 @@ public class App {
                 if(child.isFile() && !"cfm".equals(ext) && !"cfc".equals(ext)) {
                     continue;
                 }
+                if("WEB-INF".equals(child.getName()) || "mxunit".equals(child.getName())) {
+                    continue; // TODO: Un hard code
+                }
                 process(config, parser, root, child);
             }
         } else {
