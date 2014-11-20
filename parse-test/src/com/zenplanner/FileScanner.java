@@ -49,19 +49,11 @@ public class FileScanner {
             }
 
             Set<String> refs = new HashSet<String>();
-            new StatementScanner(refs).scan(page);
-            String path = gvSafe(makeRelative(root, file));
+            new StatementScanner(refs, root, file).scan(page); // TODO: better OO
+            String path = gvSafe(StatementScanner.makeRelative(root, file));
             map.put(path, refs);
             //System.out.println(refs.size() + " references in " + file);
         }
-    }
-
-    private static String makeRelative(File root, File child) {
-        String path = root.toURI().relativize(child.toURI()).getPath().toLowerCase();
-        if (path.endsWith("/")) {
-            path = path.substring(0, path.length() - 1);
-        }
-        return path;
     }
 
     public static String gvSafe(String parent) {

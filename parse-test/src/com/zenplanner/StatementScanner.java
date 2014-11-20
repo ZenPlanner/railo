@@ -1,5 +1,7 @@
 package com.zenplanner;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import railo.transformer.bytecode.Body;
 import railo.transformer.bytecode.Page;
 import railo.transformer.bytecode.Statement;
@@ -16,15 +18,22 @@ import railo.transformer.bytecode.statement.*;
 import railo.transformer.bytecode.statement.tag.*;
 import railo.transformer.library.tag.TagLibTag;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.util.Set;
 
 public class StatementScanner {
 
     private final Set<String> references;
+    private final File root;
+    private final File file;
+    private final File folder;
 
-    public StatementScanner(Set<String> references) {
+    public StatementScanner(Set<String> references, File root, File file) {
         this.references = references;
+        this.root = root;
+        this.file = file;
+        this.folder = file.getParentFile();
     }
 
     public void scan(Statement stmt) throws Exception {
@@ -254,7 +263,46 @@ public class StatementScanner {
 
     private void addRef(Expression exp) {
         String ref = getName(exp);
+        if(ref.toUpperCase() != ref) { // Hack to signify NULL or DYNAMIC
+            ref = normalize(ref);
+            File relative = new File(folder, ref);
+            if(relative.exists()) {
+                ref = makeRelative(root, relative);
+            } else {
+                File absolute = new File(root, ref);
+                if(absolute.exists()) {
+                    ref = makeRelative(root, absolute);
+                } else {
+                    System.out.println("File not found: " + ref);
+                }
+            }
+            ref = normalize(ref);
+        }
         references.add(ref);
+    }
+
+    private static String normalize(String ref) {
+        String ext;
+        if (ref.endsWith(".cfm")) {
+            ext = ".cfm";
+            ref = ref.substring(0, ref.length() - 4);
+        } else if (ref.endsWith(".cfc")) {
+            ext = ".cfc";
+            ref = ref.substring(0, ref.length() - 4);
+        } else {
+            ext = ".cfc";
+        }
+        normalizeFolderSeperator(ref);
+        ref = ref.replace('.', '/');
+        while(ref.contains("//")) {
+            ref = ref.replaceAll("//","/");
+        }
+        ref = ref + ext;
+        return ref;
+    }
+
+    private static String normalizeFolderSeperator(String path) {
+        return path.replace('\\', '/');
     }
 
     private String getName(Expression exp) {
@@ -266,7 +314,7 @@ public class StatementScanner {
         }
         if(exp instanceof LitString) {
             LitString lit = (LitString)exp;
-            return lit.getString();
+            return lit.getString().toLowerCase();
         }
         if(exp instanceof OpString) {
             return "DYNAMIC";
@@ -293,6 +341,14 @@ public class StatementScanner {
         String path = tlt.getAttribute("__custom_tag_path").getDefaultValue() + "/";
         path += fileName;
         references.add(path);
+    }
+
+    public static String makeRelative(File root, File child) {
+        String path = root.toURI().relativize(child.toURI()).getPath().toLowerCase();
+        if (path.endsWith("/")) {
+            path = path.substring(0, path.length() - 1);
+        }
+        return path;
     }
 
 }
