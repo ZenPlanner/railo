@@ -1,18 +1,20 @@
 package com.zenplanner;
 
-import org.h2.util.StringUtils;
 import railo.transformer.bytecode.Body;
 import railo.transformer.bytecode.Page;
 import railo.transformer.bytecode.Statement;
+import railo.transformer.bytecode.expression.Expression;
+import railo.transformer.bytecode.expression.var.*;
+import railo.transformer.bytecode.statement.Condition;
+import railo.transformer.bytecode.statement.ExpressionStatement;
 import railo.transformer.bytecode.statement.HasBody;
 import railo.transformer.bytecode.statement.PrintOut;
 import railo.transformer.bytecode.statement.tag.*;
 import railo.transformer.library.tag.TagLibTag;
 
-import java.io.File;
-import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 public class StatementScanner {
@@ -23,91 +25,123 @@ public class StatementScanner {
         this.references = references;
     }
 
-    public void process(Statement stmt) {
-        recurse(stmt, null);
+    public void scan(Statement stmt) throws Exception {
+        processStatement(stmt);
     }
 
-    private void recurse(Statement stmt, Context context) {
-        process(stmt, context);
-
-        if(stmt instanceof Body) {
-            recurse((Body)stmt, context);
-        }
-        if(stmt instanceof HasBody) {
-            recurse(((HasBody)stmt).getBody(), context);
-        }
-    }
-
-    private void recurse(Body body, Context context) {
-        if(body == null) {
-            return;
-        }
-        context = new Context(context);
-        for(Object obj : body.getStatements()) {
-            Statement stmt = (Statement)obj;
-            recurse(stmt, context);
-        }
-    }
-
-    private void process(Statement stmt, Context context) {
+    private void processStatement(Statement stmt) throws Exception {
         if(stmt instanceof Page) {
             Page p = (Page)stmt;
-            System.out.println("Page:\n\t" + p);
+            processBody(p);
             return;
         }
         if(stmt instanceof PrintOut) {
-            PrintOut po = (PrintOut) stmt;
-            String str = po.getExpr().toString().trim();
-            if (str.length() > 0) {
-                System.out.println("PrintObj:\n\t" + str);
-            }
-            return;
+            return; // No recursion
         }
         if (stmt instanceof TagImport) {
             TagImport ti = (TagImport) stmt;
-            Attribute prefix = ti.getAttribute("prefix");
-            Attribute taglib = ti.getAttribute("taglib");
-            context.addImport(prefix.getValue().toString(), taglib.getValue().toString());
-            System.out.println("TagImport\n\tprefix=" + prefix + "\n\ttaglib=" + taglib);
+            processBody(ti.getBody());
             return;
         }
         if (stmt instanceof TagInclude) {
             TagInclude ti = (TagInclude)stmt;
             Attribute template = ti.getAttribute("template");
-            references.add(template.getValue().toString());
-            System.out.println("TagInclude\n\ttemplate=" + template);
+            references.add(template.getValue().toString().toLowerCase());
+            processBody(ti.getBody());
             return;
         }
         if (stmt instanceof TagIf) {
             TagIf ti = (TagIf)stmt;
-            Attribute condition = ti.getAttribute("condition");
-            System.out.println("TagIf\n\tcondition=" + condition);
+            processBody(ti.getBody());
             return;
         }
         if (stmt instanceof TagOutput) {
-            System.out.println("TagOutput:\n\t" + stmt);
+            TagOutput ti = (TagOutput)stmt;
+            processBody(ti.getBody());
             return;
         }
         if (stmt instanceof TagParam) {
-            System.out.println("TagParam:\n\t" + stmt);
+            TagParam tp = (TagParam)stmt;
+            processBody(tp.getBody());
+            return;
+        }
+        if (stmt instanceof ExpressionStatement) {
+            ExpressionStatement es = (ExpressionStatement)stmt;
+            Field f = ExpressionStatement.class.getDeclaredField("expr");
+            f.setAccessible(true);
+            Expression exp = (Expression)f.get(es);
+            processExpression(exp);
             return;
         }
         if(stmt instanceof Tag) {
             processTag((Tag)stmt);
             return;
         }
+        if(stmt instanceof Condition) {
+            Condition con = (Condition)stmt;
+            for(Body body : con.getBodies()) {
+                processBody(body);
+            }
+            return;
+        }
         throw new RuntimeException("Unknown statement: " + stmt);
+    }
+
+    private void processBody(Body body) throws Exception {
+        if(body == null) {
+            return;
+        }
+        for(Object obj : body.getStatements()) {
+            Statement stmt = (Statement)obj;
+            processStatement(stmt);
+        }
+    }
+
+    private void processExpression(Expression exp) {
+        if(exp instanceof Assign) {
+            Assign ass = (Assign)exp;
+            Expression child = ass.getValue();
+            processExpression(child);
+            return;
+        }
+        if(exp instanceof Variable) {
+            Variable var = (Variable)exp;
+            for(Object obj : var.getMembers()) {
+                processMember((Member) obj);
+            }
+            return;
+        }
+        throw new RuntimeException("Unknown Expression: " + exp);
+    }
+
+    private void processMember(Member mem) {
+        if(mem instanceof BIF) {
+            BIF bif = (BIF)mem;
+            String className = bif.getClassName();
+            if("railo.runtime.functions.other.CreateObject".equalsIgnoreCase(className)) {
+                Argument[] args = bif.getArguments();
+                String arg0 = args[0].getValue().toString();
+                if(!"component".equalsIgnoreCase(arg0)) {
+                    return;
+                }
+                String arg1 = args[0].getValue().toString();
+                return;
+            }
+            return;
+        }
+        if(mem instanceof DataMember) {
+            return;
+        }
+        if(mem instanceof UDF) {
+            return;
+        }
+        throw new RuntimeException("Unknown Member: " + mem);
     }
 
     private void processTag(Tag tag) {
         String name = tag.getFullname();
-        if (StringUtils.equals("cfprocessingdirective", name)) {
-            System.out.println("CfProcessingDirective:\n\t" + tag);
-            return;
-        }
-        if (StringUtils.equals("cfelse", name)) {
-            System.out.println("CfElse:\n\t" + tag);
-            return;
+        if(name == null) {
+            return; // Null tag hack for pure CFCs
         }
         if (name.contains(":")) { // TODO: Custom tags
             String txt = "";
@@ -119,39 +153,9 @@ public class StatementScanner {
             String path = (String)tlt.getAttribute("__custom_tag_path").getDefaultValue() + "/";
             path += fileName;
             references.add(path);
-            System.out.println("CustomTag " + txt);
+            //System.out.println("CustomTag " + txt);
             return;
         }
-        throw new RuntimeException("Unknown tag: " + tag + " name=" + name);
     }
 
-    // ------------------------------------------- Context ------------------------------------------------------------
-    private static class Context {
-
-        private final Context parent;
-        private final Map<String,String> imports = new HashMap<String, String>();
-
-        public Context(Context parent) {
-            this.parent = parent;
-        }
-
-        public void addImport(String prefix, String taglib) {
-            prefix = prefix.toLowerCase();
-            if(imports.containsKey(prefix)) {
-                throw new RuntimeException("Prefix is already defined: " + prefix);
-            }
-            imports.put(prefix, taglib);
-        }
-
-        public String getTagLib(String prefix) {
-            prefix = prefix.toLowerCase();
-            if(imports.containsKey(prefix)) {
-                return imports.get(prefix);
-            }
-            if(parent != null) {
-                return parent.getTagLib(prefix);
-            }
-            return null;
-        }
-    }
 }
