@@ -12,10 +12,11 @@ import railo.runtime.monitor.RequestMonitor;
 import railo.transformer.bytecode.Body;
 import railo.transformer.bytecode.Page;
 import railo.transformer.bytecode.ScriptBody;
+import railo.transformer.bytecode.Statement;
 import railo.transformer.bytecode.statement.Condition;
-import railo.transformer.bytecode.statement.tag.Tag;
-import railo.transformer.bytecode.statement.tag.TagBase;
-import railo.transformer.bytecode.statement.tag.TagScript;
+import railo.transformer.bytecode.statement.HasBody;
+import railo.transformer.bytecode.statement.PrintOut;
+import railo.transformer.bytecode.statement.tag.*;
 import railo.transformer.cfml.tag.CFMLTransformer;
 import railo.transformer.library.function.FunctionLib;
 import railo.transformer.library.tag.TagLib;
@@ -41,29 +42,84 @@ public class App {
         FunctionLib[] fld = new FunctionLib[] {};
 
         Page page = cfmlTransformer.transform(config,source,config.getTLDs(),config.getFLDs());
-        for(Object obj : page.getStatements()) {
-            if(obj instanceof TagScript) {
-                TagScript tag = (TagScript)obj;
-                Body body = tag.getBody();
-                if(body instanceof ScriptBody) {
-                    ScriptBody script = (ScriptBody)body;
-                    for(Object stmt : script.getStatements()) {
-                        if(stmt instanceof Condition) {
-                            Condition con = (Condition)stmt;
-                            System.out.println(con);
-                        }
-                    }
-                } else {
-                    throw new NotImplementedException("Unknown tag: " + body.getClass());
-                }
-            } else if(obj instanceof TagBase) {
-                TagBase tag = (TagBase)obj;
+        processObj(page);
+    }
+
+    public static void processObj(Object obj) {
+        if(obj instanceof Body) {
+            System.out.println("Body=" + obj);
+            processBody((Body) obj);
+        } else if(obj instanceof HasBody) {
+            if(obj instanceof TagBase) {
+                processTagBase((TagBase)obj);
+            } else if(obj instanceof TagImport) {
+                System.out.println("TagImport=" + obj);
+            } else if(obj instanceof TagInclude) {
+                System.out.println("TagInclude=" + obj);
+            } else if(obj instanceof TagIf) {
+                System.out.println("TagIf=" + obj);
+            } else if(obj instanceof TagOutput) {
+                System.out.println("TagOutput=" + obj);
+            } else if(obj instanceof TagParam) {
+                System.out.println("TagParam=" + obj);
+            } else {
+                throw new RuntimeException("Unknown tag: " + obj.getClass());
             }
-            else {
-                throw new NotImplementedException("Unknown tag: " + obj.getClass());
+            processBody(((HasBody)obj).getBody());
+        } else if(obj instanceof PrintOut) {
+            PrintOut po = (PrintOut)obj;
+            String str = po.getExpr().toString().trim();
+            if(str.length() > 0) {
+                System.out.println("PrintObj: " + str);
             }
+        }
+        else {
+            throw new RuntimeException("Unknown tag: " + obj.getClass());
         }
     }
 
+    public static void processTagBase(TagBase tag) {
+        String name = tag.getFullname();
+        if (name.equals("suppresswhitespace")) {
+            System.out.println(tag);
+        } else if(name.equals("cfprocessingdirective")) {
+            System.out.println(tag);
+        } else if(name.equals("cfimport")) {
+            System.out.println(tag);
+        } else if(name.equals("cfinclude")) {
+            System.out.println(tag);
+        } else if(name.equals("cfif")) {
+            System.out.println(tag);
+        } else if(name.equals("skin:template")) { // TODO: Custom tags?!?
+            System.out.println(tag);
+        } else if(name.equals("wf:wireframe")) { // TODO: Custom tags?!?
+            System.out.println(tag);
+        } else if(name.equals("wf:field")) { // TODO: Custom tags?!?
+            System.out.println(tag);
+        } else if(name.equals("wf:controller")) { // TODO: Custom tags?!?
+            System.out.println(tag);
+        } else if(name.equals("wf:action")) { // TODO: Custom tags?!?
+            System.out.println(tag);
+        } else if(name.equals("wf:button")) { // TODO: Custom tags?!?
+            System.out.println(tag);
+        } else if(name.equals("cfoutput")) {
+            System.out.println(tag);
+        } else if(name.equals("cfparam")) {
+            System.out.println(tag);
+        } else if(name.equals("cfelse")) {
+            System.out.println(tag);
+        }
+        else {
+            throw new RuntimeException("Unknown tag: " + tag.getFullname());
+        }
+    }
 
+    public static void processBody(Body body) {
+        if(body == null) {
+            return;
+        }
+        for(Object obj : body.getStatements()) {
+            processObj(obj);
+        }
+    }
 }
