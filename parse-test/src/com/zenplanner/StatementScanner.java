@@ -51,7 +51,7 @@ public class StatementScanner {
         if (clazz == TagInclude.class) {
             TagInclude ti = (TagInclude) stmt;
             Attribute template = ti.getAttribute("template");
-            references.add(template.getValue().toString().toLowerCase());
+            addRef(template.getValue());
             processBody(ti.getBody());
             return;
         }
@@ -91,8 +91,7 @@ public class StatementScanner {
             if(attr == null) {
                 return;
             }
-            String superClass = attr.getValue().toString().toLowerCase();
-            references.add(superClass);
+            addRef(attr.getValue());
             processBody(comp.getBody());
             return;
         }
@@ -239,8 +238,7 @@ public class StatementScanner {
                 if (!"component".equalsIgnoreCase(arg0)) {
                     return;
                 }
-                String arg1 = args[1].getValue().toString().toLowerCase();
-                references.add(arg1);
+                addRef(args[1].getValue());
                 return;
             }
             return;
@@ -252,6 +250,28 @@ public class StatementScanner {
             return;
         }
         throw new RuntimeException("Unknown Member: " + mem);
+    }
+
+    private void addRef(Expression exp) {
+        String ref = getName(exp);
+        references.add(ref);
+    }
+
+    private String getName(Expression exp) {
+        if(exp == null) {
+            return "NULL";
+        }
+        if(exp instanceof CastString) {
+            return "DYNAMIC";
+        }
+        if(exp instanceof LitString) {
+            LitString lit = (LitString)exp;
+            return lit.getString();
+        }
+        if(exp instanceof OpString) {
+            return "DYNAMIC";
+        }
+        throw new RuntimeException("Unknown type: " + exp);
     }
 
     private void processTag(Tag tag) {

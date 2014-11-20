@@ -11,15 +11,15 @@ import railo.runtime.config.ConfigImpl;
 import railo.transformer.bytecode.Page;
 import railo.transformer.cfml.tag.CFMLTransformer;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
 public class App {
-
-    private static Map<String,Set<String>> map = new TreeMap<String, Set<String>>();
 
     public static void main(String[] args) throws Exception {
         String rootPath = args[0];
@@ -30,37 +30,36 @@ public class App {
                 new MockMapping(root)
         });
         CFMLTransformer parser = new CFMLTransformer();
-        process(config, parser, root, root);
+        Map<String,Set<String>> map = new FileScanner().scan(config, parser, root);
         System.out.println("Scanned " + map.size() + " files");
+        write(new File("out.gv"), map);
     }
 
-    private static void process(ConfigImpl config, CFMLTransformer parser, File root, File file) throws Exception {
-        if(file.isDirectory()) {
-            for(File child : file.listFiles()) {
-                String ext = FilenameUtils.getExtension(child.getName());
-                if(child.isFile() && !"cfm".equals(ext) && !"cfc".equals(ext)) {
-                    continue;
+    public static void write(File file, Map<String,Set<String>> map) throws Exception {
+        FileWriter w = null;
+        BufferedWriter writer = null;
+        try {
+            w = new FileWriter(file);
+            writer = new BufferedWriter(w);
+            writer.write("digraph abstract {\n");
+            for(Map.Entry<String,Set<String>> entry : map.entrySet()) {
+                String parent = entry.getKey();
+                Set<String> children = entry.getValue();
+                for (String child : children) {
+                    writer.write(FileScanner.gvSafe(parent) + " -> " + FileScanner.gvSafe(child) + ";\n");
                 }
-                if("WEB-INF".equals(child.getName()) || "mxunit".equals(child.getName())) {
-                    continue; // TODO: Un hard code
-                }
-                process(config, parser, root, child);
             }
-        } else {
-            MockResource physicalFile = new MockResource(file);
-            SourceFile source = new MockSourceFile(root, physicalFile);
-            Page page;
-            try {
-                page = parser.transform(config, source, config.getTLDs(), config.getFLDs());
-            }  catch (Exception ex) {
-                System.out.println("Error parsing file: " + file);
-                return;
+            writer.write("}\n");
+            writer.flush();
+        } catch (Exception ex) {
+            throw ex;
+        } finally {
+            if(w != null) {
+                w.close();
             }
-
-            Set<String> refs = new HashSet<String>();
-            new StatementScanner(refs).scan(page);
-            map.put(file.getName(), refs);
-            System.out.println(refs.size() + " references in " + file);
+            if(writer != null) {
+                writer.close();
+            }
         }
     }
 
