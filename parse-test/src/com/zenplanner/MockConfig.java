@@ -3,6 +3,7 @@ package com.zenplanner;
 import org.apache.commons.lang.NotImplementedException;
 import railo.commons.io.res.Resource;
 import railo.runtime.CFMLFactory;
+import railo.runtime.Mapping;
 import railo.runtime.config.ConfigImpl;
 import railo.runtime.config.ConfigServer;
 import railo.runtime.config.ConfigServerImpl;
@@ -12,6 +13,8 @@ import railo.transformer.library.function.FunctionLib;
 import railo.transformer.library.tag.TagLib;
 
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Comparator;
 
 public class MockConfig extends ConfigImpl {
     private static final CFMLFactory factory = null;
@@ -22,6 +25,11 @@ public class MockConfig extends ConfigImpl {
 
     public MockConfig() {
         super(factory, configDir, configFile);
+    }
+
+    @Override
+    public void setMappings(Mapping[] mappings) {
+        super.setMappings(mappings);
     }
 
     @Override

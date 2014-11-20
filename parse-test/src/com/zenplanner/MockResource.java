@@ -49,7 +49,7 @@ public class MockResource implements Resource {
 
     @Override
     public boolean exists() {
-        throw new NotImplementedException();
+        return file.exists();
     }
 
     @Override
@@ -114,7 +114,7 @@ public class MockResource implements Resource {
 
     @Override
     public boolean isFile() {
-        throw new NotImplementedException();
+        return file.isFile();
     }
 
     @Override
