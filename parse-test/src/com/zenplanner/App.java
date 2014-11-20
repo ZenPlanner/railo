@@ -67,7 +67,9 @@ public class App {
             Attribute template = ti.getAttribute("template");
             System.out.println("TagInclude\n\ttemplate=" + template);
         } else if (tag instanceof TagIf) {
-            System.out.println("TagIf=" + tag);
+            TagIf ti = (TagIf)tag;
+            Attribute condition = ti.getAttribute("condition");
+            System.out.println("TagIf\n\tcondition=" + condition);
         } else if (tag instanceof TagOutput) {
             System.out.println("TagOutput=" + tag);
         } else if (tag instanceof TagParam) {
@@ -76,18 +78,12 @@ public class App {
             System.out.println(tag);
         } else if (StringUtils.equals("cfelse", name)) {
             System.out.println(tag);
-        } else if (StringUtils.equals("skin:template", name)) { // TODO: Custom tags
-            System.out.println(tag);
-        } else if (StringUtils.equals("wf:wireframe", name)) { // TODO: Custom tags
-            System.out.println(tag);
-        } else if (StringUtils.equals("wf:field", name)) { // TODO: Custom tags
-            System.out.println(tag);
-        } else if (StringUtils.equals("wf:controller", name)) { // TODO: Custom tags
-            System.out.println(tag);
-        } else if (StringUtils.equals("wf:action", name)) { // TODO: Custom tags
-            System.out.println(tag);
-        } else if (StringUtils.equals("wf:button", name)) { // TODO: Custom tags
-            System.out.println(tag);
+        } else if (name.contains(":")) { // TODO: Custom tags
+            String txt = "";
+            for(Object key : tag.getAttributes().keySet()) {
+                txt += "\n\t" + key + "=" + tag.getAttribute((String)key);
+            }
+            System.out.println("CustomTag " + txt);
         } else {
             throw new RuntimeException("Unknown tag: " + tag + " name=" + name);
         }
