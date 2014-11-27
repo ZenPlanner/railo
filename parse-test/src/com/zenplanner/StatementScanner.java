@@ -318,15 +318,14 @@ public class StatementScanner {
                     // TODO: Grab class name parameter and add reference
                     processExpression(argName);
                     processExpression(val);
+                    continue;
                 }
-                else if(arg.getClass() == Argument.class) {
+                if(arg.getClass() == Argument.class) {
                     Expression val = arg.getRawValue();
                     processExpression(val);
+                    continue;
                 }
-                else
-                {
-                    throw new RuntimeException("Unknown argument: " + arg.getClass());
-                }
+                throw new RuntimeException("Unknown argument: " + arg.getClass());
             }
             return;
         }
