@@ -135,7 +135,6 @@ public class StatementScanner {
         }
         if (clazz == Function.class) {
             Function func = (Function) stmt;
-            ExprString nameExpr = (ExprString)getFieldValue(func, "name");
 
             // Add return value
             ExprString returnExpr = (ExprString)getFieldValue(func, "returnType");
