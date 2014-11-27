@@ -1,0 +1,92 @@
+Manifest-Version: 1.0
+Class-Path: h2.jar jta.jar jug.jar xdb.jar jtds.jar antlr.jar dom4j.ja
+ r fonts.jar jacob.jar PDFBox.jar ehcache.jar jcommon.jar jffmpeg.jar 
+ ojdbc14.jar openamf.jar ss_css2.jar tagsoup.jar w3c-dom.jar jencrypt.
+ jar sun-mail.jar xml-apis.jar hibernate.jar javassist.jar joda-time.j
+ ar slf4j-api.jar concurrent.jar javaparser.jar jfreechart.jar jmimema
+ gic.jar jpedal_gpl.jar postgresql.jar railo-sl4j.jar serializer.jar i
+ cepdf-core.jar PDFRenderer.jar xmlparserv2.jar bcprov-jdk14.jar railo
+ -loader.jar sun-jai_core.jar sun-xml.saaj.jar apache-lucene.jar javax
+ .servlet.jar lowagie.itext.jar sun-jai_codec.jar sun-jndi-ldap.jar ap
+ ache-ws-axis.jar sun-activation.jar sun-xml-jaxrpc.jar sun-xml-wsdl4j
+ .jar sun-jndi-ldapbp.jar apache-xml-xalan.jar jfreechart-patch.jar mi
+ crosoft-msbase.jar microsoft-msutil.jar sun-jndi-ldapsec.jar apache-x
+ ml-xerces.jar hypersonic-hsqldb.jar microsoft-sqljdbc.jar objectweb-a
+ sm-all.jar org.mortbay.jetty.jar sun-security-jaas.jar apache-jakarta
+ -oro.jar apache-lucene-misc.jar apache-ws-axis-ant.jar flex-messaging
+ -opt.jar metadata-extractor.jar flex-messaging-core.jar apache-loggin
+ g-log4j.jar flex-messaging-proxy.jar openamf-astranslator.jar flex-me
+ ssaging-common.jar microsoft-mssqlserver.jar sun-jndi-providerutil.ja
+ r apache-lucene-snowball.jar fusiondebug-api-server.jar apache-lucene
+ -analyzers.jar com.naryx.tagfusion.cfx.jar flex-messaging-remoting.ja
+ r apache-lucene-similarity.jar apache-poi-tm-extractors.jar backport-
+ util-concurrent.jar mysql-connector-java-bin.jar apache-jakarta-commo
+ ns-io.jar apache-lucene-highlighter.jar apache-jakarta-commons-net.ja
+ r apache-lucene-spellchecker.jar apache-jakarta-commons-lang.jar apac
+ he-jakarta-commons-codec.jar apache-jakarta-commons-email.jar apache-
+ jakarta-commons-logging.jar apache-jakarta-commons-net-ftp.jar apache
+ -jakarta-commons-compress.jar apache-jakarta-commons-discovery.jar ap
+ ache-jakarta-commons-fileupload.jar apache-jakarta-commons-httpclient
+ .jar apache-jakarta-commons-collections.jar apache-jakarta-commons-lo
+ gging-api.jar apache-jakarta-commons-logging-adapters.jar h2.jar jta.
+ jar jug.jar xdb.jar jtds.jar antlr.jar dom4j.jar fonts.jar jacob.jar 
+ PDFBox.jar ehcache.jar jcommon.jar jffmpeg.jar ojdbc14.jar openamf.ja
+ r ss_css2.jar tagsoup.jar w3c-dom.jar jencrypt.jar sun-mail.jar xml-a
+ pis.jar hibernate.jar javassist.jar joda-time.jar slf4j-api.jar concu
+ rrent.jar javaparser.jar jfreechart.jar jmimemagic.jar jpedal_gpl.jar
+  postgresql.jar railo-sl4j.jar serializer.jar icepdf-core.jar PDFRend
+ erer.jar xmlparserv2.jar bcprov-jdk14.jar railo-loader.jar sun-jai_co
+ re.jar sun-xml.saaj.jar apache-lucene.jar javax.servlet.jar lowagie.i
+ text.jar sun-jai_codec.jar sun-jndi-ldap.jar apache-ws-axis.jar sun-a
+ ctivation.jar sun-xml-jaxrpc.jar sun-xml-wsdl4j.jar sun-jndi-ldapbp.j
+ ar apache-xml-xalan.jar jfreechart-patch.jar microsoft-msbase.jar mic
+ rosoft-msutil.jar sun-jndi-ldapsec.jar apache-xml-xerces.jar hyperson
+ ic-hsqldb.jar microsoft-sqljdbc.jar objectweb-asm-all.jar org.mortbay
+ .jetty.jar sun-security-jaas.jar apache-jakarta-oro.jar apache-lucene
+ -misc.jar apache-ws-axis-ant.jar flex-messaging-opt.jar metadata-extr
+ actor.jar flex-messaging-core.jar apache-logging-log4j.jar flex-messa
+ ging-proxy.jar openamf-astranslator.jar flex-messaging-common.jar mic
+ rosoft-mssqlserver.jar sun-jndi-providerutil.jar apache-lucene-snowba
+ ll.jar fusiondebug-api-server.jar apache-lucene-analyzers.jar com.nar
+ yx.tagfusion.cfx.jar flex-messaging-remoting.jar apache-lucene-simila
+ rity.jar apache-poi-tm-extractors.jar backport-util-concurrent.jar my
+ sql-connector-java-bin.jar apache-jakarta-commons-io.jar apache-lucen
+ e-highlighter.jar apache-jakarta-commons-net.jar apache-lucene-spellc
+ hecker.jar apache-jakarta-commons-lang.jar apache-jakarta-commons-cod
+ ec.jar apache-jakarta-commons-email.jar apache-jakarta-commons-loggin
+ g.jar apache-jakarta-commons-net-ftp.jar apache-jakarta-commons-compr
+ ess.jar apache-jakarta-commons-discovery.jar apache-jakarta-commons-f
+ ileupload.jar apache-jakarta-commons-httpclient.jar apache-jakarta-co
+ mmons-collections.jar apache-jakarta-commons-logging-api.jar apache-j
+ akarta-commons-logging-adapters.jar h2.jar jta.jar jug.jar xdb.jar jt
+ ds.jar antlr.jar dom4j.jar fonts.jar jacob.jar PDFBox.jar ehcache.jar
+  jcommon.jar jffmpeg.jar ojdbc14.jar openamf.jar ss_css2.jar tagsoup.
+ jar w3c-dom.jar jencrypt.jar sun-mail.jar xml-apis.jar hibernate.jar 
+ javassist.jar joda-time.jar slf4j-api.jar concurrent.jar javaparser.j
+ ar jfreechart.jar jmimemagic.jar jpedal_gpl.jar postgresql.jar serial
+ izer.jar icepdf-core.jar PDFRenderer.jar xmlparserv2.jar bcprov-jdk14
+ .jar railo-loader.jar sun-jai_core.jar sun-xml.saaj.jar apache-lucene
+ .jar javax.servlet.jar lowagie.itext.jar sun-jai_codec.jar sun-jndi-l
+ dap.jar apache-ws-axis.jar sun-activation.jar sun-xml-jaxrpc.jar sun-
+ xml-wsdl4j.jar sun-jndi-ldapbp.jar apache-xml-xalan.jar jfreechart-pa
+ tch.jar sun-jndi-ldapsec.jar apache-xml-xerces.jar hypersonic-hsqldb.
+ jar microsoft-sqljdbc.jar objectweb-asm-all.jar org.mortbay.jetty.jar
+  sun-security-jaas.jar apache-jakarta-oro.jar apache-lucene-misc.jar 
+ apache-ws-axis-ant.jar flex-messaging-opt.jar metadata-extractor.jar 
+ flex-messaging-core.jar apache-logging-log4j.jar flex-messaging-proxy
+ .jar openamf-astranslator.jar flex-messaging-common.jar microsoft-mss
+ qlserver.jar sun-jndi-providerutil.jar apache-lucene-snowball.jar fus
+ iondebug-api-server.jar apache-lucene-analyzers.jar com.naryx.tagfusi
+ on.cfx.jar flex-messaging-remoting.jar apache-lucene-similarity.jar a
+ pache-poi-tm-extractors.jar backport-util-concurrent.jar mysql-connec
+ tor-java-bin.jar apache-jakarta-commons-io.jar apache-lucene-highligh
+ ter.jar apache-jakarta-commons-net.jar apache-lucene-spellchecker.jar
+  apache-jakarta-commons-lang.jar apache-jakarta-commons-codec.jar apa
+ che-jakarta-commons-email.jar apache-jakarta-commons-logging.jar apac
+ he-jakarta-commons-net-ftp.jar apache-jakarta-commons-compress.jar ap
+ ache-jakarta-commons-discovery.jar apache-jakarta-commons-fileupload.
+ jar apache-jakarta-commons-httpclient.jar apache-jakarta-commons-coll
+ ections.jar apache-jakarta-commons-logging-api.jar apache-jakarta-com
+ mons-logging-adapters.jar
+Main-Class: 
+

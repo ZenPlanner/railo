@@ -1,15 +1,15 @@
 package com.zenplanner;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
+import com.thinkaurelius.titan.core.TitanGraph;
+import com.tinkerpop.blueprints.Vertex;
 import railo.transformer.bytecode.Body;
 import railo.transformer.bytecode.Page;
 import railo.transformer.bytecode.Statement;
 import railo.transformer.bytecode.cast.CastBoolean;
 import railo.transformer.bytecode.cast.CastString;
 import railo.transformer.bytecode.expression.Expression;
-import railo.transformer.bytecode.expression.var.*;
 import railo.transformer.bytecode.expression.var.Argument;
+import railo.transformer.bytecode.expression.var.*;
 import railo.transformer.bytecode.literal.LitBoolean;
 import railo.transformer.bytecode.literal.LitDouble;
 import railo.transformer.bytecode.literal.LitString;
@@ -20,20 +20,27 @@ import railo.transformer.library.tag.TagLibTag;
 
 import java.io.File;
 import java.lang.reflect.Field;
-import java.util.Set;
+import java.util.Map;
 
 public class StatementScanner {
 
-    private final Set<String> references;
+    private final TitanGraph graph;
     private final File root;
     private final File file;
     private final File folder;
+    private final String path;
+    private final Vertex vertex;
+    private final Map<String,Vertex> map;
 
-    public StatementScanner(Set<String> references, File root, File file) {
-        this.references = references;
+    public StatementScanner(TitanGraph graph, Map<String,Vertex> map, File root, File file) {
+        this.graph = graph;
+        this.map = map;
         this.root = root;
         this.file = file;
         this.folder = file.getParentFile();
+
+        this.path = StatementScanner.makeRelative(root, file);
+        this.vertex = addOrGet(graph, this.path);
     }
 
     public void scan(Statement stmt) throws Exception {
@@ -278,7 +285,9 @@ public class StatementScanner {
             }
             ref = normalize(ref);
         }
-        references.add(ref);
+
+        Vertex child = addOrGet(graph, ref);
+        graph.addEdge(null, this.vertex, child, "child");
     }
 
     private static String normalize(String ref) {
@@ -340,7 +349,9 @@ public class StatementScanner {
         String fileName = tag.getAppendix() + ".cfm";
         String path = tlt.getAttribute("__custom_tag_path").getDefaultValue() + "/";
         path += fileName;
-        references.add(path);
+
+        Vertex child = addOrGet(graph, path);
+        graph.addEdge(null, this.vertex, child, "child");
     }
 
     public static String makeRelative(File root, File child) {
@@ -349,6 +360,16 @@ public class StatementScanner {
             path = path.substring(0, path.length() - 1);
         }
         return path;
+    }
+
+    private Vertex addOrGet(TitanGraph graph, String path) {
+        if(map.containsKey(path)) {
+            return map.get(path);
+        }
+        Vertex vert = graph.addVertex(path);
+        vert.setProperty("path", path);
+        map.put(path, vert);
+        return vert;
     }
 
 }

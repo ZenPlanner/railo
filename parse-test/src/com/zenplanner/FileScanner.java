@@ -1,5 +1,7 @@
 package com.zenplanner;
 
+import com.thinkaurelius.titan.core.TitanGraph;
+import com.tinkerpop.blueprints.Vertex;
 import org.apache.commons.io.FilenameUtils;
 import railo.runtime.SourceFile;
 import railo.runtime.config.ConfigImpl;
@@ -14,15 +16,16 @@ import java.util.TreeMap;
 
 public class FileScanner {
 
-    private final Map<String,Set<String>> map = new TreeMap<String, Set<String>>();
+    private final TitanGraph graph;
+    private final Map<String,Vertex> map;
 
-    public FileScanner() {
-
+    public FileScanner(TitanGraph graph, Map<String,Vertex> map) {
+        this.graph = graph;
+        this.map = map;
     }
 
-    public Map<String,Set<String>> scan(ConfigImpl config, CFMLTransformer parser, File root) throws Exception {
+    public void scan(ConfigImpl config, CFMLTransformer parser, File root) throws Exception {
         scan(config, parser, root, root);
-        return map; // TODO: better OO
     }
 
     private void scan(ConfigImpl config, CFMLTransformer parser, File root, File file) throws Exception {
@@ -48,19 +51,8 @@ public class FileScanner {
                 return;
             }
 
-            Set<String> refs = new HashSet<String>();
-            new StatementScanner(refs, root, file).scan(page); // TODO: better OO
-            String path = gvSafe(StatementScanner.makeRelative(root, file));
-            map.put(path, refs);
-            //System.out.println(refs.size() + " references in " + file);
+            new StatementScanner(graph, map, root, file).scan(page); // TODO: better OO
         }
-    }
-
-    public static String gvSafe(String parent) {
-        parent = parent.replace('/', '_');
-        parent = parent.replace('.', '_');
-        parent = parent.replace('-', '_');
-        return parent;
     }
 
 }

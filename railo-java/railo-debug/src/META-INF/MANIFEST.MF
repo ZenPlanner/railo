@@ -88,5 +88,4 @@ Class-Path: h2.jar jta.jar jug.jar xdb.jar jtds.jar antlr.jar dom4j.ja
  jar apache-jakarta-commons-httpclient.jar apache-jakarta-commons-coll
  ections.jar apache-jakarta-commons-logging-api.jar apache-jakarta-com
  mons-logging-adapters.jar
-Main-Class: 
 
