@@ -21,7 +21,10 @@ import railo.transformer.library.tag.TagLibTag;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class StatementScanner {
 
@@ -31,9 +34,14 @@ public class StatementScanner {
     private final File folder;
     private final String path;
     private final Vertex vertex;
-    private final Map<String,Vertex> map;
+    private final Map<String, Vertex> map;
 
-    public StatementScanner(TitanGraph graph, Map<String,Vertex> map, File root, File file) {
+    private static final Set<String> nativeTypes = new HashSet<String>(Arrays.asList(new String[]{
+            "string", "any", "query", "number", "array", "boolean", "integer", "struct", "void", "numeric", "date",
+            "http", "guid", "object"
+    }));
+
+    public StatementScanner(TitanGraph graph, Map<String, Vertex> map, File root, File file) {
         this.graph = graph;
         this.map = map;
         this.root = root;
@@ -56,7 +64,7 @@ public class StatementScanner {
             return;
         }
         if (clazz == PrintOut.class) {
-            PrintOut po = (PrintOut)stmt;
+            PrintOut po = (PrintOut) stmt;
             processExpression(po.getExpr());
             return;
         }
@@ -102,10 +110,10 @@ public class StatementScanner {
             }
             return;
         }
-        if(clazz == TagComponent.class) {
-            TagComponent comp = (TagComponent)stmt;
+        if (clazz == TagComponent.class) {
+            TagComponent comp = (TagComponent) stmt;
             Attribute attr = comp.getAttribute("extends");
-            if(attr == null) {
+            if (attr == null) {
                 return;
             }
             addRef(attr.getValue());
@@ -113,49 +121,57 @@ public class StatementScanner {
             return;
         }
         if (clazz == Tag.class) {
-            Tag tag = (Tag)stmt;
+            Tag tag = (Tag) stmt;
             processTag(tag);
             processBody(tag.getBody());
             return;
         }
-        if(clazz == Switch.class) {
-            Switch sw = (Switch)stmt;
-            for(Body body : sw.getBodies()) {
+        if (clazz == Switch.class) {
+            Switch sw = (Switch) stmt;
+            for (Body body : sw.getBodies()) {
                 processBody(body);
             }
             return;
         }
-        if(clazz == Function.class) {
-            Function func = (Function)stmt;
+        if (clazz == Function.class) {
+            Function func = (Function) stmt;
 
             // Add return value
             Field returnField = Function.class.getDeclaredField("returnType");
             returnField.setAccessible(true);
-            ExprString returnExpr = (ExprString)returnField.get(func);
+            ExprString returnExpr = (ExprString) returnField.get(func);
             addRef(returnExpr);
 
-            // TODO: process arguments
+            // Process arguments
+            for (Object obj : func.getArguments()) {
+                if (obj instanceof railo.transformer.bytecode.statement.Argument == false) {
+                    throw new RuntimeException("Unknown argument: " + obj.getClass());
+                }
+                railo.transformer.bytecode.statement.Argument arg = (railo.transformer.bytecode.statement.Argument) obj;
+                ExprString argType = arg.getType();
+                addRef(argType);
+            }
 
             // Process body
             processBody(func.getBody());
             return;
         }
         if (stmt instanceof Body) {
-            Body tag = (Body)stmt;
+            Body tag = (Body) stmt;
             processBody(tag);
             return;
         }
         if (stmt instanceof HasBody) {
-            HasBody tag = (HasBody)stmt;
+            HasBody tag = (HasBody) stmt;
             processBody(tag.getBody());
             return;
         }
-        if(stmt instanceof Return) {
+        if (stmt instanceof Return) {
             return;
         }
-        if(stmt instanceof TryCatchFinally) {
-            TryCatchFinally tcf = (TryCatchFinally)stmt;
-            for(Body body : tcf.getBodies()) {
+        if (stmt instanceof TryCatchFinally) {
+            TryCatchFinally tcf = (TryCatchFinally) stmt;
+            for (Body body : tcf.getBodies()) {
                 processBody(body);
             }
             return;
@@ -188,62 +204,62 @@ public class StatementScanner {
             }
             return;
         }
-        if(clazz == OpContional.class) {
-            OpContional op = (OpContional)exp;
+        if (clazz == OpContional.class) {
+            OpContional op = (OpContional) exp;
             Field cont = OpContional.class.getDeclaredField("cont");
             cont.setAccessible(true);
-            processExpression((Expression)cont.get(op));
+            processExpression((Expression) cont.get(op));
 
             processLAndR(exp);
 
             return;
         }
-        if(clazz == OPDecision.class) {
+        if (clazz == OPDecision.class) {
             processLAndR(exp);
             return;
         }
-        if(clazz == OpString.class) {
+        if (clazz == OpString.class) {
             processLAndR(exp);
             return;
         }
-        if(clazz == OpDouble.class) {
+        if (clazz == OpDouble.class) {
             processLAndR(exp);
             return;
         }
-        if(clazz == OpBool.class) {
+        if (clazz == OpBool.class) {
             processLAndR(exp);
             return;
         }
-        if(clazz == CastString.class) {
-            CastString cast = (CastString)exp;
+        if (clazz == CastString.class) {
+            CastString cast = (CastString) exp;
             processExpression(cast.getExpr());
             return;
         }
-        if(clazz == OpNegate.class) {
+        if (clazz == OpNegate.class) {
             Field expr = exp.getClass().getDeclaredField("expr");
             expr.setAccessible(true);
-            processExpression((Expression)expr.get(exp));
+            processExpression((Expression) expr.get(exp));
             return;
         }
-        if(clazz == OpNegateNumber.class) {
+        if (clazz == OpNegateNumber.class) {
             Field expr = exp.getClass().getDeclaredField("expr");
             expr.setAccessible(true);
-            processExpression((Expression)expr.get(exp));
+            processExpression((Expression) expr.get(exp));
             return;
         }
-        if(clazz == CastBoolean.class) {
+        if (clazz == CastBoolean.class) {
             Field expr = exp.getClass().getDeclaredField("expr");
             expr.setAccessible(true);
-            processExpression((Expression)expr.get(exp));
+            processExpression((Expression) expr.get(exp));
             return;
         }
-        if(clazz == LitString.class) {
+        if (clazz == LitString.class) {
             return;
         }
-        if(clazz == LitBoolean.class) {
+        if (clazz == LitBoolean.class) {
             return;
         }
-        if(clazz == LitDouble.class) {
+        if (clazz == LitDouble.class) {
             return;
         }
         throw new RuntimeException("Unknown Expression: " + exp);
@@ -252,11 +268,11 @@ public class StatementScanner {
     private void processLAndR(Object op) throws Exception {
         Field left = op.getClass().getDeclaredField("left");
         left.setAccessible(true);
-        processExpression((Expression)left.get(op));
+        processExpression((Expression) left.get(op));
 
         Field right = op.getClass().getDeclaredField("right");
         right.setAccessible(true);
-        processExpression((Expression)right.get(op));
+        processExpression((Expression) right.get(op));
     }
 
     private void processMember(Member mem) {
@@ -286,39 +302,12 @@ public class StatementScanner {
 
     private void addRef(Expression exp) {
         String ref = getName(exp);
-        if("string".equals(ref)) {
+        if (nativeTypes.contains(ref)) {
             return;
         }
-        if("any".equals(ref)) {
-            return;
-        }
-        if("query".equals(ref)) {
-            return;
-        }
-        if("number".equals(ref)) {
-            return;
-        }
-        if("array".equals(ref)) {
-            return;
-        }
-        if("boolean".equals(ref)) {
-            return;
-        }
-        if("integer".equals(ref)) {
-            return;
-        }
-        if("struct".equals(ref)) {
-            return;
-        }
-        if("void".equals(ref)) {
-            return;
-        }
-        if("numeric".equals(ref)) {
-            return;
-        }
-        if(ref.toUpperCase() != ref) { // Hack to signify NULL or DYNAMIC
+        if (ref.toUpperCase() != ref) { // Hack to signify NULL or DYNAMIC
             String resolved = resolvePath(ref);
-            if(resolved == null) {
+            if (resolved == null) {
                 System.out.println("Parsing " + file.getPath() + " file not found: " + ref);
                 return;
             }
@@ -332,13 +321,13 @@ public class StatementScanner {
     private String resolvePath(String ref) {
         ref = normalize(ref);
         File relative = new File(folder, ref);
-        if(relative.exists()) {
+        if (relative.exists()) {
             ref = makeRelative(root, relative);
             ref = normalize(ref);
             return ref;
         }
         File absolute = new File(root, ref);
-        if(absolute.exists()) {
+        if (absolute.exists()) {
             ref = makeRelative(root, absolute);
             ref = normalize(ref);
             return ref;
@@ -359,8 +348,8 @@ public class StatementScanner {
         }
         normalizeFolderSeperator(ref);
         ref = ref.replace('.', '/');
-        while(ref.contains("//")) {
-            ref = ref.replaceAll("//","/");
+        while (ref.contains("//")) {
+            ref = ref.replaceAll("//", "/");
         }
         ref = ref + ext;
         return ref;
@@ -371,17 +360,17 @@ public class StatementScanner {
     }
 
     private String getName(Expression exp) {
-        if(exp == null) {
+        if (exp == null) {
             return "NULL";
         }
-        if(exp instanceof CastString) {
+        if (exp instanceof CastString) {
             return "DYNAMIC";
         }
-        if(exp instanceof LitString) {
-            LitString lit = (LitString)exp;
+        if (exp instanceof LitString) {
+            LitString lit = (LitString) exp;
             return lit.getString().toLowerCase();
         }
-        if(exp instanceof OpString) {
+        if (exp instanceof OpString) {
             return "DYNAMIC";
         }
         throw new RuntimeException("Unknown type: " + exp);
@@ -419,7 +408,7 @@ public class StatementScanner {
     }
 
     private Vertex addOrGet(TitanGraph graph, String path) {
-        if(map.containsKey(path)) {
+        if (map.containsKey(path)) {
             return map.get(path);
         }
         Vertex vert = graph.addVertex(path);
