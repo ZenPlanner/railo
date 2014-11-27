@@ -38,7 +38,7 @@ public class StatementScanner {
 
     private static final Set<String> nativeTypes = new HashSet<String>(Arrays.asList(new String[]{
             "string", "any", "query", "number", "array", "boolean", "integer", "struct", "void", "numeric", "date",
-            "http", "guid", "object"
+            "http", "guid", "object", "component"
     }));
 
     public StatementScanner(TitanGraph graph, Map<String, Vertex> map, File root, File file) {
@@ -135,6 +135,14 @@ public class StatementScanner {
         }
         if (clazz == Function.class) {
             Function func = (Function) stmt;
+            ExprString nameExpr = (ExprString)getFieldValue(func, "name");
+            if(nameExpr instanceof LitString) {
+                LitString lstr = (LitString)nameExpr;
+                String funcName = lstr.getString();
+                if(file.getName().toLowerCase().contains("membership") && "onAfterSave".equals(funcName)) {
+                    System.out.println(file.getName() + "." + funcName);
+                }
+            }
 
             // Add return value
             ExprString returnExpr = (ExprString)getFieldValue(func, "returnType");
@@ -279,7 +287,7 @@ public class StatementScanner {
         processExpression((Expression) right.get(op));
     }
 
-    private void processMember(Member mem) {
+    private void processMember(Member mem) throws Exception {
         Class<?> clazz = mem.getClass();
         if (clazz == BIF.class) {
             BIF bif = (BIF) mem;
@@ -299,6 +307,27 @@ public class StatementScanner {
             return;
         }
         if (clazz == UDF.class) {
+            UDF udf = (UDF)mem;
+            ExprString funcName = udf.getName();
+            for(Argument arg : udf.getArguments()) {
+                if(arg.getClass() == NamedArgument.class) {
+                    NamedArgument narg = (NamedArgument)arg;
+                    Expression argName = narg.getName();
+                    Expression val = narg.getRawValue();
+
+                    // TODO: Grab class name parameter and add reference
+                    processExpression(argName);
+                    processExpression(val);
+                }
+                else if(arg.getClass() == Argument.class) {
+                    Expression val = arg.getRawValue();
+                    processExpression(val);
+                }
+                else
+                {
+                    throw new RuntimeException("Unknown argument: " + arg.getClass());
+                }
+            }
             return;
         }
         throw new RuntimeException("Unknown Member: " + mem);
