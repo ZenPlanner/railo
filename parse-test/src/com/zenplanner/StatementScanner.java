@@ -135,11 +135,10 @@ public class StatementScanner {
         }
         if (clazz == Function.class) {
             Function func = (Function) stmt;
+            ExprString nameExpr = (ExprString)getFieldValue(func, "name");
 
             // Add return value
-            Field returnField = Function.class.getDeclaredField("returnType");
-            returnField.setAccessible(true);
-            ExprString returnExpr = (ExprString) returnField.get(func);
+            ExprString returnExpr = (ExprString)getFieldValue(func, "returnType");
             addRef(returnExpr);
 
             // Process arguments
@@ -177,6 +176,12 @@ public class StatementScanner {
             return;
         }
         throw new RuntimeException("Unknown statement: " + stmt);
+    }
+
+    private static Object getFieldValue(Object obj, String fieldName) throws Exception {
+        Field field = obj.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field.get(obj);
     }
 
     private void processBody(Body body) throws Exception {
