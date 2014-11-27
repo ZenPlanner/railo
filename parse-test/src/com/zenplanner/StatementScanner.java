@@ -7,6 +7,7 @@ import railo.transformer.bytecode.Page;
 import railo.transformer.bytecode.Statement;
 import railo.transformer.bytecode.cast.CastBoolean;
 import railo.transformer.bytecode.cast.CastString;
+import railo.transformer.bytecode.expression.ExprString;
 import railo.transformer.bytecode.expression.Expression;
 import railo.transformer.bytecode.expression.var.Argument;
 import railo.transformer.bytecode.expression.var.*;
@@ -122,6 +123,21 @@ public class StatementScanner {
             for(Body body : sw.getBodies()) {
                 processBody(body);
             }
+            return;
+        }
+        if(clazz == Function.class) {
+            Function func = (Function)stmt;
+
+            // Add return value
+            Field returnField = Function.class.getDeclaredField("returnType");
+            returnField.setAccessible(true);
+            ExprString returnExpr = (ExprString)returnField.get(func);
+            addRef(returnExpr);
+
+            // TODO: process arguments
+
+            // Process body
+            processBody(func.getBody());
             return;
         }
         if (stmt instanceof Body) {
@@ -270,24 +286,64 @@ public class StatementScanner {
 
     private void addRef(Expression exp) {
         String ref = getName(exp);
+        if("string".equals(ref)) {
+            return;
+        }
+        if("any".equals(ref)) {
+            return;
+        }
+        if("query".equals(ref)) {
+            return;
+        }
+        if("number".equals(ref)) {
+            return;
+        }
+        if("array".equals(ref)) {
+            return;
+        }
+        if("boolean".equals(ref)) {
+            return;
+        }
+        if("integer".equals(ref)) {
+            return;
+        }
+        if("struct".equals(ref)) {
+            return;
+        }
+        if("void".equals(ref)) {
+            return;
+        }
+        if("numeric".equals(ref)) {
+            return;
+        }
         if(ref.toUpperCase() != ref) { // Hack to signify NULL or DYNAMIC
-            ref = normalize(ref);
-            File relative = new File(folder, ref);
-            if(relative.exists()) {
-                ref = makeRelative(root, relative);
-            } else {
-                File absolute = new File(root, ref);
-                if(absolute.exists()) {
-                    ref = makeRelative(root, absolute);
-                } else {
-                    System.out.println("File not found: " + ref);
-                }
+            String resolved = resolvePath(ref);
+            if(resolved == null) {
+                System.out.println("Parsing " + file.getPath() + " file not found: " + ref);
+                return;
             }
-            ref = normalize(ref);
+            ref = resolved;
         }
 
         Vertex child = addOrGet(graph, ref);
         graph.addEdge(null, this.vertex, child, "child");
+    }
+
+    private String resolvePath(String ref) {
+        ref = normalize(ref);
+        File relative = new File(folder, ref);
+        if(relative.exists()) {
+            ref = makeRelative(root, relative);
+            ref = normalize(ref);
+            return ref;
+        }
+        File absolute = new File(root, ref);
+        if(absolute.exists()) {
+            ref = makeRelative(root, absolute);
+            ref = normalize(ref);
+            return ref;
+        }
+        return null;
     }
 
     private static String normalize(String ref) {
