@@ -363,6 +363,9 @@ public class StatementScanner {
         if (nativeTypes.contains(ref)) {
             return;
         }
+        if(ref.contains("view_")) {
+            return; // Hack to exclude views
+        }
         if (ref.toUpperCase() != ref) { // Hack to signify NULL or DYNAMIC
             String resolved = resolvePath(ref);
             if (resolved == null) {
