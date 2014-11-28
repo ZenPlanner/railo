@@ -5,6 +5,7 @@ import com.tinkerpop.blueprints.Vertex;
 import org.apache.commons.io.FilenameUtils;
 import railo.runtime.SourceFile;
 import railo.runtime.config.ConfigImpl;
+import railo.runtime.exp.TemplateException;
 import railo.transformer.bytecode.Page;
 import railo.transformer.cfml.tag.CFMLTransformer;
 
@@ -46,8 +47,11 @@ public class FileScanner {
             Page page;
             try {
                 page = parser.transform(config, source, config.getTLDs(), config.getFLDs());
+            } catch (TemplateException ex) {
+                System.out.println(ex.getMessage() + ": " + file + ":" + ex.getLine());
+                return;
             }  catch (Exception ex) {
-                System.out.println("Error parsing file: " + file);
+                ex.printStackTrace();
                 return;
             }
 

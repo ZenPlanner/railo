@@ -84,7 +84,7 @@ public class MockResource implements Resource {
 
     @Override
     public Resource getParentResource() {
-        throw new NotImplementedException();
+        return this;
     }
 
     @Override
@@ -94,7 +94,7 @@ public class MockResource implements Resource {
 
     @Override
     public Resource getRealResource(String realpath) {
-        throw new NotImplementedException();
+        return new MockResource(new File(realpath));
     }
 
     @Override
