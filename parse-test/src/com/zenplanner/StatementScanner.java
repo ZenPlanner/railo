@@ -22,6 +22,7 @@ import railo.transformer.library.tag.TagLibTag;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class StatementScanner {
 
@@ -32,6 +33,8 @@ public class StatementScanner {
     private final String path;
     private final Vertex vertex;
     private final Map<String, Vertex> map;
+
+    private static final Pattern notDot = Pattern.compile("") ;
 
     private static final Set<String> nativeTypes = new HashSet<String>(Arrays.asList(new String[]{
             "string", "any", "query", "number", "array", "boolean", "integer", "struct", "void", "numeric", "date",
@@ -422,10 +425,9 @@ public class StatementScanner {
             ext = ".cfc";
         }
         normalizeFolderSeperator(ref);
+        ref = ref.replace("..", "^^"); // Hack to avoid replacing ".."
         ref = ref.replace('.', '/');
-        while (ref.contains("//")) {
-            ref = ref.replaceAll("//", "/");
-        }
+        ref = ref.replace("^^", ".."); // Hack to avoid replacing ".."
         ref = ref + ext;
         return ref;
     }
