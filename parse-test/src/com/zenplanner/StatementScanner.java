@@ -21,10 +21,7 @@ import railo.transformer.library.tag.TagLibTag;
 
 import java.io.File;
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class StatementScanner {
 
@@ -314,8 +311,9 @@ public class StatementScanner {
                     NamedArgument narg = (NamedArgument)arg;
                     Expression argName = narg.getName();
                     Expression val = narg.getRawValue();
+                    getClassParam(narg);
 
-                    // TODO: Grab class name parameter and add reference
+                    // Process
                     processExpression(argName);
                     processExpression(val);
                     continue;
@@ -330,6 +328,34 @@ public class StatementScanner {
             return;
         }
         throw new RuntimeException("Unknown Member: " + mem);
+    }
+
+    private void getClassParam(NamedArgument narg) throws Exception {
+        Expression argName = narg.getName();
+        Expression val = narg.getRawValue();
+        List members = (List)getFieldValue(argName, "members");
+
+        if(members.size() != 1) {
+            return;
+        }
+        Object obj = members.get(0);
+        if(obj instanceof DataMember == false) {
+            throw new RuntimeException("Unknown member: " + obj.getClass());
+        }
+        DataMember m = (DataMember)obj;
+        ExprString es = m.getName();
+        if(es instanceof LitString == false) {
+            throw new RuntimeException("Unknown expression: " + es.getClass());
+        }
+        LitString ls = (LitString)es;
+        String an = ls.getString();
+        if(!"class".equalsIgnoreCase(an)) {
+            return; // Not a parameter named "class"
+        }
+        if(val instanceof LitString == false) {
+            return; // Dynamic reference
+        }
+        addRef(val);
     }
 
     private void addRef(Expression exp) {
@@ -352,18 +378,32 @@ public class StatementScanner {
 
     private String resolvePath(String ref) {
         ref = normalize(ref);
+
+        // Relative
         File relative = new File(folder, ref);
         if (relative.exists()) {
             ref = makeRelative(root, relative);
             ref = normalize(ref);
             return ref;
         }
+
+        // Absolute
         File absolute = new File(root, ref);
         if (absolute.exists()) {
             ref = makeRelative(root, absolute);
             ref = normalize(ref);
             return ref;
         }
+
+        // Model hack
+        File modelDir = new File(root, "zenplanner/model");
+        File model = new File(modelDir, ref);
+        if (model.exists()) {
+            ref = makeRelative(root, model);
+            ref = normalize(ref);
+            return ref;
+        }
+
         return null;
     }
 
