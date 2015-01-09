@@ -48,7 +48,7 @@ public final class DatasourceConnectionImpl implements DatasourceConnectionPro {
      */
     public Connection getConnection() {
         if(connection != null) {
-            System.out.println("" + System.identityHashCode(connection) + " DatasourceConnectionImpl.getConnection()");
+            //System.out.println("" + System.identityHashCode(connection) + " DatasourceConnectionImpl.getConnection()");
         }
         return connection;
     }
@@ -219,7 +219,7 @@ public final class DatasourceConnectionImpl implements DatasourceConnectionPro {
 	 * @see railo.runtime.db.DatasourceConnectionPro#close()
 	 */
 	public void close() throws SQLException {
-        System.out.println("" + System.identityHashCode(getConnection()) + " DatasourceConnectionImpl.close()");
+        //System.out.println("" + System.identityHashCode(getConnection()) + " DatasourceConnectionImpl.close()");
 		//closePreparedStatements(-1);
 		getConnection().close();
 	}

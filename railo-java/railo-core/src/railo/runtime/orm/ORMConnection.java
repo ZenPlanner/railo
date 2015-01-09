@@ -16,6 +16,7 @@ import java.sql.Statement;
 import java.sql.Struct;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Executor;
 
 import railo.runtime.PageContext;
 import railo.runtime.exp.PageException;
@@ -332,6 +333,31 @@ public class ORMConnection implements Connection {
 	 */
 	public Struct createStruct(String typeName, Object[] attributes)throws SQLException {
 		throw notSupported();
+	}
+
+	@Override
+	public void setSchema(String schema) throws SQLException {
+
+	}
+
+	@Override
+	public String getSchema() throws SQLException {
+		return null;
+	}
+
+	@Override
+	public void abort(Executor executor) throws SQLException {
+
+	}
+
+	@Override
+	public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
+
+	}
+
+	@Override
+	public int getNetworkTimeout() throws SQLException {
+		return 0;
 	}
 
 	private SQLException notSupported() {

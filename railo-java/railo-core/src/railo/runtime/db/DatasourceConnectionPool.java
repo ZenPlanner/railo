@@ -144,7 +144,7 @@ public class DatasourceConnectionPool {
 		
 		try {
 			if(autoCommit!=null) {
-                System.out.println("" + System.identityHashCode(dc.getConnection()) + " DatasourceConnectionPool.isValid(" + autoCommit.booleanValue() + ")");
+                //System.out.println("" + System.identityHashCode(dc.getConnection()) + " DatasourceConnectionPool.isValid(" + autoCommit.booleanValue() + ")");
                 dc.getConnection().setAutoCommit(autoCommit.booleanValue());
             }
 		} 

@@ -1201,6 +1201,17 @@ public class QueryWrap implements Query {
 	public void updateNClob(String arg0, Reader arg1) throws SQLException {
 		throw notSupported();
 	}
+
+	@Override
+	public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
+		return null;
+	}
+
+	@Override
+	public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
+		return null;
+	}
+
 	public void updateNClob(int arg0, Reader arg1, long arg2)
 			throws SQLException {
 		throw notSupported();

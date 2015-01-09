@@ -3421,6 +3421,16 @@ public class QueryImpl implements QueryPro,Objects,Sizeable {
 		updateClob(columnLabel, reader);
 	}
 
+	@Override
+	public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
+		return null;
+	}
+
+	@Override
+	public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
+		return null;
+	}
+
 	public <T> T unwrap(Class<T> iface) throws SQLException {
 		throw notSupported();
 	}

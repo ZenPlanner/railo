@@ -40,6 +40,12 @@ public class RunAsJavaApplication {
         ServletHandler servlets = new ServletHandler();
         context.addHandler(servlets);
 
+        // --- power search
+        servlets.addServlet(
+                "PowerSearchServlet",
+                "/zenplanner/studio/multisearch/index.cfm",
+                "com.zenplanner.servlet.PowerSearchServlet");
+
         // ----------------------------------------- CFML Servlet -------------------------------
         ServletHolder cfmlServlet = servlets.addServlet(
                 "CFMLServlet",
@@ -71,10 +77,6 @@ public class RunAsJavaApplication {
                 "org.apache.axis.transport.http.AxisServlet");
 
         // ----------------------------------------- Misc Servlets -------------------------------
-        servlets.addServlet(
-                "HelloWorldServlet",
-                "/servlet/hello-world",
-                "com.zenplanner.servlet.HelloWorldServlet");
 
 
         // init

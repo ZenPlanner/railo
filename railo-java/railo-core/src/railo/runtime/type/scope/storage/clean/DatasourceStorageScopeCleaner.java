@@ -57,6 +57,7 @@ public class DatasourceStorageScopeCleaner extends StorageScopeCleanerSupport {
 		//  	executeUpdate(config,dc.getConnection(),"insert into "+PREFIX+"_"+getTypeAsString()+"_data (expires,data,cfid,name) values(?,?,?,?)",false);
 		   
 	    // select
+		//System.out.println("DatasourceStorageScopeCleaner.clean()");
 	    SQL sqlSelect=new SQLImpl("select cfid,name from "+StorageScopeDatasource.PREFIX+"_"+strType+"_data where expires<=?"
 						,new SQLItem[]{
 			 		new SQLItemImpl(System.currentTimeMillis(),Types.VARCHAR)

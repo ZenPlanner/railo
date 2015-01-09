@@ -33,6 +33,8 @@ import railo.runtime.type.dt.DateTime;
 import railo.runtime.type.dt.DateTimeImpl;
 import railo.runtime.type.scope.ScopeContext;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * client scope that store it's data in a datasource
  */
@@ -140,8 +142,17 @@ public abstract class StorageScopeDatasource extends StorageScopeImpl {
 	    String str=Caster.toString(query.get(KeyImpl.DATA));
 	    if(mxStyle) return null;
 	    Struct s = (Struct)pc.evaluate(str);
+		try {
+			System.out.println("StorageScopeDatasource.loadData() "
+							+ " CFID=" + pc.getCFID()
+							+ " url=" + ((HttpServletRequest)pc.getRequest()).getRequestURI()
+							+ " ParitionId=" + s.get("PARTITIONID")
+			);
+		} catch (Exception ex) {
+			// Ignore logging errors
+		}
 	    ScopeContext.info(log,"load existing data from ["+datasourceName+"."+PREFIX+"_"+strType+"_data] to create "+strType+" scope for "+pc.getApplicationContext().getName()+"/"+pc.getCFID());
-		
+
 	    return s;
 	}
 
@@ -151,7 +162,15 @@ public abstract class StorageScopeDatasource extends StorageScopeImpl {
 	public void touchAfterRequest(PageContext pc) {
 		setTimeSpan(pc);
 		super.touchAfterRequest(pc); 
-		
+
+		try {
+			System.out.println("StorageScopeDatasource.save() CFID=" + pc.getCFID()
+					+ " url=" + ((HttpServletRequest)pc.getRequest()).getRequestURI()
+					+ " ParitionId=" + pc.clientScope().get("PARTITIONID")
+			);
+		} catch (Exception ex) {
+			// swallow logging exception
+		}
 		store(pc.getConfig());
 	}
 	
@@ -163,6 +182,7 @@ public abstract class StorageScopeDatasource extends StorageScopeImpl {
 		DatasourceConnectionPool pool = ci.getDatasourceConnectionPool();
 		try {
 			dc=pool.getDatasourceConnection(null,config.getDataSource(datasourceName),null,null);
+			//System.out.println("StorageScopeDatasource.store() CFID=" + ci.getId());
 			int recordsAffected = executeUpdate(config,dc.getConnection(),"update "+PREFIX+"_"+getTypeAsString()+"_data set expires=?,data=? where cfid=? and name=?",false);
 		    if(recordsAffected>1) {
 		    	executeUpdate(config,dc.getConnection(),"delete from "+PREFIX+"_"+getTypeAsString()+"_data where cfid=? and name=?",true);
@@ -187,7 +207,8 @@ public abstract class StorageScopeDatasource extends StorageScopeImpl {
 		DatasourceConnectionPool pool = ci.getDatasourceConnectionPool();
 		try {
 			dc=pool.getDatasourceConnection(null,config.getDataSource(datasourceName),null,null);
-			executeUpdate(config,dc.getConnection(),"delete from "+PREFIX+"_"+getTypeAsString()+"_data where cfid=? and name=?",true);
+			System.out.println("delete CFID=" + config.getId());
+			executeUpdate(config, dc.getConnection(), "delete from " + PREFIX + "_" + getTypeAsString() + "_data where cfid=? and name=?",true);
 		} 
 		catch (Exception e) {}
 		finally {

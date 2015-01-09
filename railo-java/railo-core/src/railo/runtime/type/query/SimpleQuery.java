@@ -2676,6 +2676,16 @@ public class SimpleQuery implements QueryPro, ResultSet, Objects {
 		res.updateNClob(toIndex(columnLabel), reader);
 	}
 
+	@Override
+	public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
+		return null;
+	}
+
+	@Override
+	public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
+		return null;
+	}
+
 	/**
 	 * @see railo.runtime.type.QueryImpl#unwrap(java.lang.Class)
 	 */
