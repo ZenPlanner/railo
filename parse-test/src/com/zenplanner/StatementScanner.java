@@ -76,7 +76,7 @@ public class StatementScanner {
         if (clazz == TagInclude.class) {
             TagInclude ti = (TagInclude) stmt;
             Attribute template = ti.getAttribute("template");
-            addRef(template.getValue());
+            addRef(template.getValue(), "includes");
             processBody(ti.getBody());
             return;
         }
@@ -116,7 +116,7 @@ public class StatementScanner {
             if (attr == null) {
                 return;
             }
-            addRef(attr.getValue());
+            addRef(attr.getValue(), "extends");
             processBody(comp.getBody());
             return;
         }
@@ -146,7 +146,7 @@ public class StatementScanner {
 
             // Add return value
             ExprString returnExpr = (ExprString)getFieldValue(func, "returnType");
-            addRef(returnExpr);
+            addRef(returnExpr, "returns");
 
             // Process arguments
             for (Object obj : func.getArguments()) {
@@ -155,7 +155,7 @@ public class StatementScanner {
                 }
                 railo.transformer.bytecode.statement.Argument arg = (railo.transformer.bytecode.statement.Argument) obj;
                 ExprString argType = arg.getType();
-                addRef(argType);
+                addRef(argType, "accepts");
             }
 
             // Process body
@@ -298,7 +298,7 @@ public class StatementScanner {
                 if (!"component".equalsIgnoreCase(arg0)) {
                     return;
                 }
-                addRef(args[1].getValue());
+                addRef(args[1].getValue(), "creates");
                 return;
             }
             return;
@@ -309,7 +309,6 @@ public class StatementScanner {
         if (clazz == UDF.class) {
             UDF udf = (UDF)mem;
             ExprString funcName = udf.getName();
-            funcName = funcName;
             for(Argument arg : udf.getArguments()) {
                 if(arg.getClass() == NamedArgument.class) {
                     NamedArgument narg = (NamedArgument)arg;
@@ -359,10 +358,10 @@ public class StatementScanner {
         if(val instanceof LitString == false) {
             return; // Dynamic reference
         }
-        addRef(val);
+        addRef(val, "calls");
     }
 
-    private void addRef(Expression exp) {
+    private void addRef(Expression exp, String type) {
         String ref = getName(exp);
         if (nativeTypes.contains(ref)) {
             return;
@@ -380,7 +379,7 @@ public class StatementScanner {
         }
 
         Vertex child = addOrGet(graph, ref);
-        graph.addEdge(null, this.vertex, child, "child");
+        graph.addEdge(null, this.vertex, child, type);
     }
 
     private String resolvePath(String ref) {
