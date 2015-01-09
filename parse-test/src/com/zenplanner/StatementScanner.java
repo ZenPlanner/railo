@@ -309,6 +309,7 @@ public class StatementScanner {
         if (clazz == UDF.class) {
             UDF udf = (UDF)mem;
             ExprString funcName = udf.getName();
+            funcName = funcName;
             for(Argument arg : udf.getArguments()) {
                 if(arg.getClass() == NamedArgument.class) {
                     NamedArgument narg = (NamedArgument)arg;
@@ -441,14 +442,32 @@ public class StatementScanner {
             return "NULL";
         }
         if (exp instanceof CastString) {
-            return "DYNAMIC";
+            CastString cs = (CastString)exp;
+            Expression expr = cs.getExpr();
+            if(expr instanceof Assign) {
+                Assign ass = (Assign)expr;
+                Expression val = ass.getValue();
+                if(val instanceof LitString) {
+                    LitString ls = (LitString)val;
+                    return ls.getString().toLowerCase();
+                } else {
+                    System.out.println("Unknown exp: " + val.getClass());
+                }
+            }
+            else if(expr instanceof Variable) {
+                return "DYNAMIC"; // e.g. CreateObject('component', local.email)
+            }
+            else {
+                System.out.println("Unknown exp: " + expr.getClass());
+            }
+            return "DYNAMIC"; // e.g. CreateObject('component', local.email)
         }
         if (exp instanceof LitString) {
             LitString lit = (LitString) exp;
             return lit.getString().toLowerCase();
         }
         if (exp instanceof OpString) {
-            return "DYNAMIC";
+            return "DYNAMIC"; // e.g. <cfinclude template="navigation-#Attributes.navigation#.cfm"> | CreateObject('component', Variables.handlers & 'SendEmail')
         }
         throw new RuntimeException("Unknown type: " + exp);
     }
