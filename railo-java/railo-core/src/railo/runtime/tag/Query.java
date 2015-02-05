@@ -28,16 +28,8 @@ import railo.runtime.op.Decision;
 import railo.runtime.orm.ORMSession;
 import railo.runtime.orm.ORMUtil;
 import railo.runtime.tag.util.DeprecatedUtil;
-import railo.runtime.type.Array;
-import railo.runtime.type.ArrayImpl;
+import railo.runtime.type.*;
 import railo.runtime.type.Collection;
-import railo.runtime.type.KeyImpl;
-import railo.runtime.type.List;
-import railo.runtime.type.QueryColumn;
-import railo.runtime.type.QueryImpl;
-import railo.runtime.type.QueryPro;
-import railo.runtime.type.Struct;
-import railo.runtime.type.StructImpl;
 import railo.runtime.type.dt.DateTime;
 import railo.runtime.type.dt.DateTimeImpl;
 import railo.runtime.type.dt.TimeSpan;
@@ -419,7 +411,7 @@ public final class Query extends BodyTagTryCatchFinallyImpl {
 		super.doFinally();
 	}
 
-	public static Map<Long,Long> reentrantMap = new HashMap<Long,Long>();
+	public static Map<Scope,Long> reentrantMap = new HashMap<Scope,Long>();
 
 	/**
 	* @throws PageException
@@ -427,165 +419,160 @@ public final class Query extends BodyTagTryCatchFinallyImpl {
 	*/
 	public int doEndTag() throws PageException	{
 
-		long id = System.identityHashCode(pageContext.localScope());
-		synchronized (reentrantMap) {
-			Long otherId = reentrantMap.get(id);
-			if(otherId != null) {
-				System.out.println("Shared scope " + id +
-								" thisThreadId=" + Thread.currentThread().getId() +
-					            " otherThreadId=" + otherId
-				);
-			}
-			reentrantMap.put(id, Thread.currentThread().getId());
-		}
-		System.out.println("start localScopeId=" + id + " threadId=" + Thread.currentThread().getId());
+		Scope scope = pageContext.localScope();
+        try {
+            synchronized (reentrantMap) {
+                Long otherThread = reentrantMap.get(scope);
+                Long thisThread = Thread.currentThread().getId();
+                if (otherThread != null && !otherThread.equals(thisThread)) {
+                    System.out.println("Shared scope " + System.identityHashCode(scope) +
+                                    " thisThreadId=" + thisThread +
+                                    " otherThreadId=" + otherThread
+                    );
+                }
+                reentrantMap.put(scope, thisThread);
+            }
+            System.out.println("start localScopeId=" + System.identityHashCode(scope) + " threadId=" + Thread.currentThread().getId());
 
-		if(hasChangedPSQ)pageContext.setPsq(orgPSQ);
-		String strSQL=bodyContent.getString();
-		if(strSQL.length()==0) throw new DatabaseException("no sql string defined, inside query tag",null,null,null);
-		SQL sql=items.size()>0?new SQLImpl(strSQL,(SQLItem[])items.toArray(new SQLItem[items.size()])):new SQLImpl(strSQL);
+            if (hasChangedPSQ) pageContext.setPsq(orgPSQ);
+            String strSQL = bodyContent.getString();
+            if (strSQL.length() == 0)
+                throw new DatabaseException("no sql string defined, inside query tag", null, null, null);
+            SQL sql = items.size() > 0 ? new SQLImpl(strSQL, (SQLItem[]) items.toArray(new SQLItem[items.size()])) : new SQLImpl(strSQL);
 
-		railo.runtime.type.Query query=null;
-		int exe=0;
-		boolean hasCached=cachedWithin!=null || cachedafter!=null;
-
-
-		if(clearCache) {
-			hasCached=false;
-			pageContext.getQueryCache().remove(sql,datasource!=null?datasource.getName():null,username,password);
-		}
-		else if(hasCached) {
-			query=pageContext.getQueryCache().getQuery(sql,datasource!=null?datasource.getName():null,username,password,cachedafter);
-		}
+            railo.runtime.type.Query query = null;
+            int exe = 0;
+            boolean hasCached = cachedWithin != null || cachedafter != null;
 
 
-		if(query==null) {
-			if("query".equals(dbtype)) 		query=executeQoQ(sql);
-			else if("orm".equals(dbtype) || "hql".equals(dbtype)) 	{
-				long start=System.currentTimeMillis();
-				Object obj = executeORM(sql,returntype,ormoptions);
-
-				if(obj instanceof railo.runtime.type.Query){
-					query=(railo.runtime.type.Query) obj;
-				}
-				else {
-					if(!StringUtil.isEmpty(name)) {
-						pageContext.setVariable(name,obj);
-					}
-					if(result!=null){
-						Struct sct=new StructImpl();
-						sct.setEL(QueryImpl.CACHED, Boolean.FALSE);
-						sct.setEL(QueryImpl.EXECUTION_TIME, Caster.toDouble(System.currentTimeMillis()-start));
-						sct.setEL(QueryImpl.SQL, sql.getSQLString());
-						if(Decision.isArray(obj)){
-
-						}
-						else sct.setEL(QueryImpl.RECORDCOUNT, Caster.toDouble(1));
-
-						pageContext.setVariable(result, sct);
-					}
-					else
-						setExecutionTime(System.currentTimeMillis()-start);
-					System.out.println("end localScopeId=" + id + " threadId=" + Thread.currentThread().getId());
-					synchronized (reentrantMap) {
-						reentrantMap.remove(id);
-					}
-					return EVAL_PAGE;
-				}
-			}
-			else query=executeDatasoure(sql,result!=null);
-			//query=(dbtype!=null && dbtype.equals("query"))?executeQoQ(sql):executeDatasoure(sql,result!=null);
-
-			if(cachedWithin!=null) {
-				DateTimeImpl cachedBefore = null;
-				//if(cachedWithin!=null)
-					cachedBefore=new DateTimeImpl(pageContext,System.currentTimeMillis()+cachedWithin.getMillis(),false);
-	                pageContext.getQueryCache().set(sql,datasource!=null?datasource.getName():null,username,password,query,cachedBefore);
+            if (clearCache) {
+                hasCached = false;
+                pageContext.getQueryCache().remove(sql, datasource != null ? datasource.getName() : null, username, password);
+            } else if (hasCached) {
+                query = pageContext.getQueryCache().getQuery(sql, datasource != null ? datasource.getName() : null, username, password, cachedafter);
+            }
 
 
-			}
-			exe=query.executionTime();
-		}
-        else query.setCached(hasCached);
+            if (query == null) {
+                if ("query".equals(dbtype)) query = executeQoQ(sql);
+                else if ("orm".equals(dbtype) || "hql".equals(dbtype)) {
+                    long start = System.currentTimeMillis();
+                    Object obj = executeORM(sql, returntype, ormoptions);
 
-		if(pageContext.getConfig().debug() && debug) {
-			boolean debugUsage=DebuggerImpl.debugQueryUsage(pageContext,query);
-			((DebuggerImpl)pageContext.getDebugger()).addQuery(debugUsage?query:null,datasource!=null?datasource.getName():null,name,sql,query.getRecordcount(),pageContext.getCurrentPageSource(),exe);
-		}
+                    if (obj instanceof railo.runtime.type.Query) {
+                        query = (railo.runtime.type.Query) obj;
+                    } else {
+                        if (!StringUtil.isEmpty(name)) {
+                            pageContext.setVariable(name, obj);
+                        }
+                        if (result != null) {
+                            Struct sct = new StructImpl();
+                            sct.setEL(QueryImpl.CACHED, Boolean.FALSE);
+                            sct.setEL(QueryImpl.EXECUTION_TIME, Caster.toDouble(System.currentTimeMillis() - start));
+                            sct.setEL(QueryImpl.SQL, sql.getSQLString());
+                            if (Decision.isArray(obj)) {
 
-		if(!query.isEmpty() && !StringUtil.isEmpty(name)) {
-			System.out.println("Setting " +
-					id + "." + name +
-					"=" + System.identityHashCode(query) +
-					" on " + System.identityHashCode(this) +
-					" thread=" + Thread.currentThread().getId());
-			pageContext.setVariable(name, query);
-		}
+                            } else sct.setEL(QueryImpl.RECORDCOUNT, Caster.toDouble(1));
 
-		// Result
-		if(result!=null) {
+                            pageContext.setVariable(result, sct);
+                        } else
+                            setExecutionTime(System.currentTimeMillis() - start);
+                        return EVAL_PAGE;
+                    }
+                } else query = executeDatasoure(sql, result != null);
+                //query=(dbtype!=null && dbtype.equals("query"))?executeQoQ(sql):executeDatasoure(sql,result!=null);
 
-			Struct sct=new StructImpl();
-			sct.setEL(QueryImpl.CACHED, Caster.toBoolean(query.isCached()));
-			if(!query.isEmpty())sct.setEL(QueryImpl.COLUMNLIST, List.arrayToList(query.getColumns(),","));
-			int rc=query.getRecordcount();
-			if(rc==0)rc=query.getUpdateCount();
-			sct.setEL(QueryImpl.RECORDCOUNT, Caster.toDouble(rc));
-			sct.setEL(QueryImpl.EXECUTION_TIME, Caster.toDouble(query.executionTime()));
-			sct.setEL(QueryImpl.SQL, sql.getSQLString());
+                if (cachedWithin != null) {
+                    DateTimeImpl cachedBefore = null;
+                    //if(cachedWithin!=null)
+                    cachedBefore = new DateTimeImpl(pageContext, System.currentTimeMillis() + cachedWithin.getMillis(), false);
+                    pageContext.getQueryCache().set(sql, datasource != null ? datasource.getName() : null, username, password, query, cachedBefore);
 
-			// GENERATED KEYS
-			// FUTURE when getGeneratedKeys() exist in interface the toQueryImpl can be removed
-			QueryPro qi = Caster.toQueryPro(query,null);
-			if(qi !=null){
-				QueryPro qryKeys = Caster.toQueryPro(qi.getGeneratedKeys(),null);
-				if(qryKeys!=null){
-					StringBuffer generatedKey=new StringBuffer(),sb;
-					Collection.Key[] columnNames = qryKeys.getColumnNames();
-					QueryColumn column;
-					for(int c=0;c<columnNames.length;c++){
-						column = qryKeys.getColumn(columnNames[c]);
-						sb=new StringBuffer();
-						int size=column.size();
-						for(int r=1;r<=size;r++) {
-							if(r>1)sb.append(',');
-							sb.append(Caster.toString(column.get(r)));
-						}
-						if(sb.length()>0){
-							sct.setEL(columnNames[c], sb.toString());
-							if(generatedKey.length()>0)generatedKey.append(',');
-							generatedKey.append(sb);
-						}
-					}
-					if(generatedKey.length()>0)
-						sct.setEL(GENERATEDKEY, generatedKey.toString());
-				}
-			}
 
-			// sqlparameters
-			SQLItem[] params = sql.getItems();
-			if(params!=null && params.length>0) {
-				Array arr=new ArrayImpl();
-				sct.setEL(SQL_PARAMETERS, arr);
-				for(int i=0;i<params.length;i++) {
-					arr.append(params[i].getValue());
+                }
+                exe = query.executionTime();
+            } else query.setCached(hasCached);
 
-				}
-			}
-			pageContext.setVariable(result, sct);
-		}
-		// cfquery.executiontime
-		else {
-			setExecutionTime(exe);
+            if (pageContext.getConfig().debug() && debug) {
+                boolean debugUsage = DebuggerImpl.debugQueryUsage(pageContext, query);
+                ((DebuggerImpl) pageContext.getDebugger()).addQuery(debugUsage ? query : null, datasource != null ? datasource.getName() : null, name, sql, query.getRecordcount(), pageContext.getCurrentPageSource(), exe);
+            }
 
-		}
+            if (!query.isEmpty() && !StringUtil.isEmpty(name)) {
+                System.out.println("Setting " +
+                        scope + "." + name +
+                        "=" + System.identityHashCode(query) +
+                        " on " + System.identityHashCode(this) +
+                        " thread=" + Thread.currentThread().getId());
+                pageContext.setVariable(name, query);
+            }
 
-		System.out.println("end localScopeId=" + id + " threadId=" + Thread.currentThread().getId());
-		synchronized (reentrantMap) {
-			reentrantMap.remove(id);
-		}
-		return EVAL_PAGE;
-	}
+            // Result
+            if (result != null) {
+
+                Struct sct = new StructImpl();
+                sct.setEL(QueryImpl.CACHED, Caster.toBoolean(query.isCached()));
+                if (!query.isEmpty()) sct.setEL(QueryImpl.COLUMNLIST, List.arrayToList(query.getColumns(), ","));
+                int rc = query.getRecordcount();
+                if (rc == 0) rc = query.getUpdateCount();
+                sct.setEL(QueryImpl.RECORDCOUNT, Caster.toDouble(rc));
+                sct.setEL(QueryImpl.EXECUTION_TIME, Caster.toDouble(query.executionTime()));
+                sct.setEL(QueryImpl.SQL, sql.getSQLString());
+
+                // GENERATED KEYS
+                // FUTURE when getGeneratedKeys() exist in interface the toQueryImpl can be removed
+                QueryPro qi = Caster.toQueryPro(query, null);
+                if (qi != null) {
+                    QueryPro qryKeys = Caster.toQueryPro(qi.getGeneratedKeys(), null);
+                    if (qryKeys != null) {
+                        StringBuffer generatedKey = new StringBuffer(), sb;
+                        Collection.Key[] columnNames = qryKeys.getColumnNames();
+                        QueryColumn column;
+                        for (int c = 0; c < columnNames.length; c++) {
+                            column = qryKeys.getColumn(columnNames[c]);
+                            sb = new StringBuffer();
+                            int size = column.size();
+                            for (int r = 1; r <= size; r++) {
+                                if (r > 1) sb.append(',');
+                                sb.append(Caster.toString(column.get(r)));
+                            }
+                            if (sb.length() > 0) {
+                                sct.setEL(columnNames[c], sb.toString());
+                                if (generatedKey.length() > 0) generatedKey.append(',');
+                                generatedKey.append(sb);
+                            }
+                        }
+                        if (generatedKey.length() > 0)
+                            sct.setEL(GENERATEDKEY, generatedKey.toString());
+                    }
+                }
+
+                // sqlparameters
+                SQLItem[] params = sql.getItems();
+                if (params != null && params.length > 0) {
+                    Array arr = new ArrayImpl();
+                    sct.setEL(SQL_PARAMETERS, arr);
+                    for (int i = 0; i < params.length; i++) {
+                        arr.append(params[i].getValue());
+
+                    }
+                }
+                pageContext.setVariable(result, sct);
+            }
+            // cfquery.executiontime
+            else {
+                setExecutionTime(exe);
+
+            }
+
+            return EVAL_PAGE;
+        } finally {
+            System.out.println("end localScopeId=" + System.identityHashCode(scope) + " threadId=" + Thread.currentThread().getId());
+            synchronized (reentrantMap) {
+                reentrantMap.remove(scope);
+            }
+        }
+    }
 
 	private void setExecutionTime(long exe) {
 		Struct sct=new StructImpl();
