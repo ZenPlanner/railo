@@ -53,25 +53,12 @@ import railo.runtime.op.Operator;
 import railo.runtime.op.ThreadLocalDuplication;
 import railo.runtime.op.date.DateCaster;
 import railo.runtime.thread.ThreadUtil;
-import railo.runtime.type.ArrayImpl;
-import railo.runtime.type.Collection;
-import railo.runtime.type.FunctionArgument;
-import railo.runtime.type.KeyImpl;
-import railo.runtime.type.List;
-import railo.runtime.type.Sizeable;
-import railo.runtime.type.Struct;
-import railo.runtime.type.StructImpl;
-import railo.runtime.type.UDF;
-import railo.runtime.type.UDFGSProperty;
-import railo.runtime.type.UDFImpl;
-import railo.runtime.type.UDFProperties;
+import railo.runtime.type.*;
+import railo.runtime.type.Scope;
 import railo.runtime.type.cfc.ComponentAccess;
 import railo.runtime.type.comparator.ArrayOfStructComparator;
 import railo.runtime.type.dt.DateTime;
-import railo.runtime.type.scope.Argument;
-import railo.runtime.type.scope.ArgumentImpl;
-import railo.runtime.type.scope.ArgumentIntKey;
-import railo.runtime.type.scope.Variables;
+import railo.runtime.type.scope.*;
 import railo.runtime.type.util.ArrayUtil;
 import railo.runtime.type.util.ComponentUtil;
 import railo.runtime.type.util.PropertyFactory;
@@ -541,115 +528,103 @@ public final class ComponentImpl extends StructSupport implements Externalizable
         if(member==null)throw ComponentUtil.notFunction(this, KeyImpl.init(name), null,access);
         throw ComponentUtil.notFunction(this, KeyImpl.init(name), member.getValue(),access);
     }
-	
-	Object _call(PageContext pc, UDF udf, Struct namedArgs, Object[] args) throws PageException {
-			
-		Object rtn=null;
-		Variables parent=null;
-        
-		// INFO duplicate code is for faster execution -> less contions
-		
-		
-		// debug yes
-		if(pc.getConfig().debug()) {
-		    DebugEntry debugEntry=pc.getDebugger().getEntry(pc,pageSource,udf.getFunctionName());//new DebugEntry(src,udf.getFunctionName());
-			int currTime=pc.getExecutionTime();
-			long time=System.currentTimeMillis();
-			
-			// sync yes
-			if(top.properties._synchronized){
-				synchronized (this) {
-					try {
-						parent=beforeCall(pc);// FUTURE add to interface
-						if(args!=null)rtn=udf.call(pc,args,true);
-						else rtn=udf.callWithNamedValues(pc,namedArgs,true);
-					}		
-					finally {
-						pc.setVariablesScope(parent);
-						int diff= ((int)(System.currentTimeMillis()-time)-(pc.getExecutionTime()-currTime));
-						pc.setExecutionTime(pc.getExecutionTime()+diff);
-						debugEntry.updateExeTime(diff);	
-					}	
-				}
-			}
 
-			// sync no
-			else {
-				try {
-					parent=beforeCall(pc);// FUTURE add to interface
-					if(args!=null)rtn=udf.call(pc,args,true);
-					else rtn=udf.callWithNamedValues(pc,namedArgs,true);
-				}		
-				finally {
-					pc.setVariablesScope(parent);
-					int diff= ((int)(System.currentTimeMillis()-time)-(pc.getExecutionTime()-currTime));
-					pc.setExecutionTime(pc.getExecutionTime()+diff);
-					debugEntry.updateExeTime(diff);	
-				}	
-			}
-			
-			
-		}
-		
-		// debug no
-		else {
-			
-			// sync yes
-			if(top.properties._synchronized){
-				synchronized (this) {
-				    try {
-		            	parent=beforeCall(pc); // FUTURE add to interface
-		            	if(args!=null)rtn=udf.call(pc,args,true);
-						else rtn=udf.callWithNamedValues(pc,namedArgs,true);
-					}		
-					finally {
-						pc.setVariablesScope(parent);
-					}
-				}
-			}
-			
-			// sync no
-			else {
-			    try {
-	            	parent=beforeCall(pc); // FUTURE add to interface
-	            	if(args!=null)rtn=udf.call(pc,args,true);
-					else rtn=udf.callWithNamedValues(pc,namedArgs,true);
-				}		
-				finally {
-					pc.setVariablesScope(parent);
-				}
-			}
-		}
-		return rtn;
-	}
+    public static Map<Scope, Long> reentrantMap = new HashMap<Scope, Long>();
 
-	/*private void openLock(int id) {
-		// check log
-		if(top.properties._synchronized) {
-			if(top.threadUsingLock!=0 && top.threadUsingLock!=id){
-				try {
-					top.threadsWaiting++;
-					synchronized(this) {
-		    			wait();
-		    			top.threadsWaiting--;
-		    		}
-				} catch (InterruptedException e) {
-					
-				}
-			}
-			else top.threadUsingLock=id;
-		}
-	}
+    Object _call(PageContext pc, UDF udf, Struct namedArgs, Object[] args) throws PageException {
+        Scope scope = pc.localScope();
+        try {
+            synchronized (reentrantMap) {
+                Long otherThread = reentrantMap.get(scope);
+                Long thisThread = Thread.currentThread().getId();
+                if (scope instanceof LocalNotSupportedScope == false && otherThread != null && !otherThread.equals(thisThread)) {
+                    System.out.println("Shared scope " + System.identityHashCode(scope) +
+                                    " thisThreadId=" + thisThread +
+                                    " otherThreadId=" + otherThread
+                    );
+                }
+                reentrantMap.put(scope, thisThread);
+            }
+            Object rtn = null;
+            Variables parent = null;
 
-	private void closeLock() {
-		top.threadUsingLock=0;
-		if(top.threadsWaiting==0)return;
-		synchronized(this) {
-    		notify();
-    	}
-	}*/
-	
-	
+            // INFO duplicate code is for faster execution -> less contions
+
+
+            // debug yes
+            if (pc.getConfig().debug()) {
+                DebugEntry debugEntry = pc.getDebugger().getEntry(pc, pageSource, udf.getFunctionName());//new DebugEntry(src,udf.getFunctionName());
+                int currTime = pc.getExecutionTime();
+                long time = System.currentTimeMillis();
+
+                // sync yes
+                if (top.properties._synchronized) {
+                    synchronized (this) {
+                        try {
+                            parent = beforeCall(pc);// FUTURE add to interface
+                            if (args != null) rtn = udf.call(pc, args, true);
+                            else rtn = udf.callWithNamedValues(pc, namedArgs, true);
+                        } finally {
+                            pc.setVariablesScope(parent);
+                            int diff = ((int) (System.currentTimeMillis() - time) - (pc.getExecutionTime() - currTime));
+                            pc.setExecutionTime(pc.getExecutionTime() + diff);
+                            debugEntry.updateExeTime(diff);
+                        }
+                    }
+                }
+
+                // sync no
+                else {
+                    try {
+                        parent = beforeCall(pc);// FUTURE add to interface
+                        if (args != null) rtn = udf.call(pc, args, true);
+                        else rtn = udf.callWithNamedValues(pc, namedArgs, true);
+                    } finally {
+                        pc.setVariablesScope(parent);
+                        int diff = ((int) (System.currentTimeMillis() - time) - (pc.getExecutionTime() - currTime));
+                        pc.setExecutionTime(pc.getExecutionTime() + diff);
+                        debugEntry.updateExeTime(diff);
+                    }
+                }
+
+
+            }
+
+            // debug no
+            else {
+
+                // sync yes
+                if (top.properties._synchronized) {
+                    synchronized (this) {
+                        try {
+                            parent = beforeCall(pc); // FUTURE add to interface
+                            if (args != null) rtn = udf.call(pc, args, true);
+                            else rtn = udf.callWithNamedValues(pc, namedArgs, true);
+                        } finally {
+                            pc.setVariablesScope(parent);
+                        }
+                    }
+                }
+
+                // sync no
+                else {
+                    try {
+                        parent = beforeCall(pc); // FUTURE add to interface
+                        if (args != null) rtn = udf.call(pc, args, true);
+                        else rtn = udf.callWithNamedValues(pc, namedArgs, true);
+                    } finally {
+                        pc.setVariablesScope(parent);
+                    }
+                }
+            }
+            return rtn;
+        } finally {
+            synchronized (reentrantMap) {
+                reentrantMap.remove(scope);
+            }
+        }
+    }
+
 	/**
      * will be called before executing method or constructor
      * @param pc

@@ -37,11 +37,7 @@ import railo.runtime.op.Caster;
 import railo.runtime.op.Decision;
 import railo.runtime.op.Duplicator;
 import railo.runtime.type.Collection.Key;
-import railo.runtime.type.scope.Argument;
-import railo.runtime.type.scope.ArgumentIntKey;
-import railo.runtime.type.scope.ArgumentPro;
-import railo.runtime.type.scope.LocalImpl;
-import railo.runtime.type.scope.Undefined;
+import railo.runtime.type.scope.*;
 import railo.runtime.type.util.ComponentUtil;
 import railo.runtime.writer.BodyContentUtil;
 
@@ -388,7 +384,7 @@ public class UDFImpl extends MemberSupport implements UDF, Sizeable, Externaliza
             synchronized (reentrantMap) {
                 Long otherThread = reentrantMap.get(scope);
                 Long thisThread = Thread.currentThread().getId();
-                if (otherThread != null && !otherThread.equals(thisThread)) {
+                if (scope instanceof LocalNotSupportedScope == false && otherThread != null && !otherThread.equals(thisThread)) {
                     System.out.println("Shared scope " + System.identityHashCode(scope) +
                                     " thisThreadId=" + thisThread +
                                     " otherThreadId=" + otherThread
