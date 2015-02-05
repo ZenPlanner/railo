@@ -379,19 +379,20 @@ public class UDFImpl extends MemberSupport implements UDF, Sizeable, Externaliza
     // private static int count=0;
     private Object _call(PageContext pc, Object[] args, Struct values, boolean doIncludePath) throws PageException {
         //print.out(count++);
-        Scope scope = pc.localScope();
-        try {
-            synchronized (reentrantMap) {
-                Long otherThread = reentrantMap.get(scope);
-                Long thisThread = Thread.currentThread().getId();
-                if (scope instanceof LocalNotSupportedScope == false && otherThread != null && !otherThread.equals(thisThread)) {
-                    System.out.println("Shared scope " + System.identityHashCode(scope) +
-                                    " thisThreadId=" + thisThread +
-                                    " otherThreadId=" + otherThread
-                    );
-                }
-                reentrantMap.put(scope, thisThread);
+        Scope scope;
+        synchronized (reentrantMap) {
+            scope = pc.localScope();
+            Long otherThread = reentrantMap.get(scope);
+            Long thisThread = Thread.currentThread().getId();
+            if (scope instanceof LocalNotSupportedScope == false && otherThread != null && !otherThread.equals(thisThread)) {
+                System.out.println("Shared scope " + System.identityHashCode(scope) +
+                                " thisThreadId=" + thisThread +
+                                " otherThreadId=" + otherThread
+                );
             }
+            reentrantMap.put(scope, thisThread);
+        }
+        try {
             PageContextImpl pci = (PageContextImpl) pc;
             ArgumentPro newArgs = (ArgumentPro) pci.getScopeFactory().getArgumentInstance();// FUTURE
             newArgs.setFunctionArgumentNames(properties.argumentsSet);

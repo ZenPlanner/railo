@@ -532,19 +532,20 @@ public final class ComponentImpl extends StructSupport implements Externalizable
     public static Map<Scope, Long> reentrantMap = new HashMap<Scope, Long>();
 
     Object _call(PageContext pc, UDF udf, Struct namedArgs, Object[] args) throws PageException {
-        Scope scope = pc.localScope();
-        try {
-            synchronized (reentrantMap) {
-                Long otherThread = reentrantMap.get(scope);
-                Long thisThread = Thread.currentThread().getId();
-                if (scope instanceof LocalNotSupportedScope == false && otherThread != null && !otherThread.equals(thisThread)) {
-                    System.out.println("Shared scope " + System.identityHashCode(scope) +
-                                    " thisThreadId=" + thisThread +
-                                    " otherThreadId=" + otherThread
-                    );
-                }
-                reentrantMap.put(scope, thisThread);
+        Scope scope;
+        synchronized (reentrantMap) {
+            scope = pc.localScope();
+            Long otherThread = reentrantMap.get(scope);
+            Long thisThread = Thread.currentThread().getId();
+            if (scope instanceof LocalNotSupportedScope == false && otherThread != null && !otherThread.equals(thisThread)) {
+                System.out.println("Shared scope " + System.identityHashCode(scope) +
+                                " thisThreadId=" + thisThread +
+                                " otherThreadId=" + otherThread
+                );
             }
+            reentrantMap.put(scope, thisThread);
+        }
+        try {
             Object rtn = null;
             Variables parent = null;
 
