@@ -419,22 +419,20 @@ public final class Query extends BodyTagTryCatchFinallyImpl {
 	*/
 	public int doEndTag() throws PageException	{
 
-		Scope scope;
+		Scope id = pageContext.localScope();
         synchronized (reentrantMap) {
-            scope = pageContext.localScope();
-            Long otherThread = reentrantMap.get(scope);
-            Long thisThread = Thread.currentThread().getId();
-            if (otherThread != null && !otherThread.equals(thisThread)) {
-                System.out.println("Shared scope " + System.identityHashCode(scope) +
-                                " thisThreadId=" + thisThread +
+            Long otherThread = reentrantMap.get(id);
+			if(otherThread != null) {
+				System.out.println("Shared scope " + System.identityHashCode(id) +
+								" thisThreadId=" + Thread.currentThread().getId() +
                                 " otherThreadId=" + otherThread
                 );
             }
-            reentrantMap.put(scope, thisThread);
+			reentrantMap.put(pageContext.localScope(), Thread.currentThread().getId());
         }
-        try {
-            System.out.println("start localScopeId=" + System.identityHashCode(scope) + " threadId=" + Thread.currentThread().getId());
+		//System.out.println("start localScopeId=" + id + " threadId=" + Thread.currentThread().getId());
 
+        try {
             if (hasChangedPSQ) pageContext.setPsq(orgPSQ);
             String strSQL = bodyContent.getString();
             if (strSQL.length() == 0)
@@ -478,6 +476,7 @@ public final class Query extends BodyTagTryCatchFinallyImpl {
                             pageContext.setVariable(result, sct);
                         } else
                             setExecutionTime(System.currentTimeMillis() - start);
+                        //System.out.println("end localScopeId=" + id + " threadId=" + Thread.currentThread().getId());
                         return EVAL_PAGE;
                     }
                 } else query = executeDatasoure(sql, result != null);
@@ -499,12 +498,13 @@ public final class Query extends BodyTagTryCatchFinallyImpl {
                 ((DebuggerImpl) pageContext.getDebugger()).addQuery(debugUsage ? query : null, datasource != null ? datasource.getName() : null, name, sql, query.getRecordcount(), pageContext.getCurrentPageSource(), exe);
             }
 
-            if (!query.isEmpty() && !StringUtil.isEmpty(name)) {
+            if (!query.isEmpty() && !StringUtil.isEmpty(name)) {/*
                 System.out.println("Setting " +
-                        scope + "." + name +
+					id + "." + name +
                         "=" + System.identityHashCode(query) +
                         " on " + System.identityHashCode(this) +
                         " thread=" + Thread.currentThread().getId());
+					*/
                 pageContext.setVariable(name, query);
             }
 
@@ -566,13 +566,13 @@ public final class Query extends BodyTagTryCatchFinallyImpl {
 
             }
 
-            return EVAL_PAGE;
+            //System.out.println("end localScopeId=" + id + " threadId=" + Thread.currentThread().getId());
         } finally {
-            System.out.println("end localScopeId=" + System.identityHashCode(scope) + " threadId=" + Thread.currentThread().getId());
             synchronized (reentrantMap) {
-                reentrantMap.remove(scope);
+                reentrantMap.remove(id);
             }
         }
+		return EVAL_PAGE;
     }
 
 	private void setExecutionTime(long exe) {
