@@ -38,7 +38,8 @@ public class CasterException extends ExpressionException {
     
     public static String createMessage(Object o, String type) {
         
-    	if(o instanceof String) return "Can't cast String ["+o+"] to a value of type ["+type+"]";
+    	if(o instanceof String)
+            return "Can't cast String ["+o+"] to a value of type ["+type+"]";
     	if(o!=null) return "Can't cast Object type ["+Type.getName(o)+"] to a value of type ["+type+"]";
         return "Can't cast Null value to value of type ["+type+"]";
     }   
