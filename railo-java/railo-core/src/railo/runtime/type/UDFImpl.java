@@ -360,7 +360,7 @@ public class UDFImpl extends MemberSupport implements UDF, Sizeable, Externaliza
         return KeyImpl.init(str);
     }
 
-    public static Map<Scope, Long> reentrantMap = new HashMap<Scope, Long>();
+    public static Map<Wrapper, Long> reentrantMap = new HashMap<Wrapper, Long>();
 
     /**
      * @see railo.runtime.type.UDF#callWithNamedValues(railo.runtime.PageContext, railo.runtime.type.Struct, boolean)
@@ -376,15 +376,41 @@ public class UDFImpl extends MemberSupport implements UDF, Sizeable, Externaliza
         return _call(pc, args, null, doIncludePath);
     }
 
+    final class Wrapper {
+        public Scope scope;
+        public Wrapper(Scope scope) {
+            this.scope = scope;
+        }
+        @Override
+        public int hashCode() {
+            return System.identityHashCode(scope);
+        }
+        @Override
+        public boolean equals(Object other) {
+            if(other instanceof Wrapper == false) {
+                return false;
+            }
+            Wrapper o = (Wrapper)other;
+            return this.scope == o.scope;
+        }
+    }
+
     // private static int count=0;
     private Object _call(PageContext pc, Object[] args, Struct values, boolean doIncludePath) throws PageException {
         //print.out(count++);
-        Scope scope;
+        // Database.getQuery
+        if(getOwnerComponent() != null &&
+                "Database".equalsIgnoreCase(getOwnerComponent().getName()) &&
+                "getQuery".equalsIgnoreCase(getFunctionName())) {
+            System.out.println(getOwnerComponent().getName() + "." + getFunctionName() + "(" + pc.argumentsScope());
+        }
+        Wrapper scope = new Wrapper(pc.localScope());
         synchronized (reentrantMap) {
-            scope = pc.localScope();
             Long otherThread = reentrantMap.get(scope);
             Long thisThread = Thread.currentThread().getId();
-            if (scope instanceof LocalNotSupportedScope == false && otherThread != null && !otherThread.equals(thisThread)) {
+            if (scope.scope instanceof LocalNotSupportedScope == false
+                    && otherThread != null
+                    && !otherThread.equals(thisThread)) {
                 System.out.println("Shared scope " + System.identityHashCode(scope) +
                                 " thisThreadId=" + thisThread +
                                 " otherThreadId=" + otherThread
