@@ -383,10 +383,16 @@ public class UDFImpl extends MemberSupport implements UDF, Sizeable, Externaliza
         if(getOwnerComponent() != null &&
                 "Database".equalsIgnoreCase(getOwnerComponent().getName()) &&
                 "getQuery".equalsIgnoreCase(getFunctionName())) {
-            //System.out.println(getOwnerComponent().getName() + "." + getFunctionName() + "(" + pc.argumentsScope());
+            String txt = getOwnerComponent().getName() + "." + getFunctionName() + "(";
+            if(pc.argumentsScope().containsKey("class")) {
+                txt += pc.argumentsScope().get("class");
+            }
+            txt += ")";
+            System.out.println(txt);
         }
-        Scope scope = pc.localScope();
+        Scope scope;
         synchronized (reentrantMap) {
+            scope = pc.localScope();
             Long otherThread = reentrantMap.get(scope);
             Long thisThread = Thread.currentThread().getId();
             if (scope instanceof LocalNotSupportedScope == false
