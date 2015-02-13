@@ -34,7 +34,7 @@ import railo.runtime.type.dt.DateTime;
 import railo.runtime.type.dt.DateTimeImpl;
 import railo.runtime.type.dt.TimeSpan;
 import railo.runtime.type.query.SimpleQuery;
-
+import railo.runtime.type.scope.LocalNotSupportedScope;
 
 
 /**
@@ -422,7 +422,10 @@ public final class Query extends BodyTagTryCatchFinallyImpl {
 		Scope id = pageContext.localScope();
         synchronized (reentrantMap) {
             Long otherThread = reentrantMap.get(id);
-			if(otherThread != null) {
+            Long thisThread = Thread.currentThread().getId();
+            if (id instanceof LocalNotSupportedScope == false
+                    && otherThread != null
+                    && !otherThread.equals(thisThread)) {
 				System.out.println("Shared scope " + System.identityHashCode(id) +
 								" thisThreadId=" + Thread.currentThread().getId() +
                                 " otherThreadId=" + otherThread

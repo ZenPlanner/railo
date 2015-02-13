@@ -402,7 +402,7 @@ public class UDFImpl extends MemberSupport implements UDF, Sizeable, Externaliza
         if(getOwnerComponent() != null &&
                 "Database".equalsIgnoreCase(getOwnerComponent().getName()) &&
                 "getQuery".equalsIgnoreCase(getFunctionName())) {
-            System.out.println(getOwnerComponent().getName() + "." + getFunctionName() + "(" + pc.argumentsScope());
+            //System.out.println(getOwnerComponent().getName() + "." + getFunctionName() + "(" + pc.argumentsScope());
         }
         Wrapper scope = new Wrapper(pc.localScope());
         synchronized (reentrantMap) {

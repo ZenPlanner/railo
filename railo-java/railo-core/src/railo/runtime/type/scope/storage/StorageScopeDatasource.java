@@ -142,6 +142,7 @@ public abstract class StorageScopeDatasource extends StorageScopeImpl {
 	    String str=Caster.toString(query.get(KeyImpl.DATA));
 	    if(mxStyle) return null;
 	    Struct s = (Struct)pc.evaluate(str);
+        /*
 		try {
 			System.out.println("StorageScopeDatasource.loadData() "
 							+ " CFID=" + pc.getCFID()
@@ -151,6 +152,7 @@ public abstract class StorageScopeDatasource extends StorageScopeImpl {
 		} catch (Exception ex) {
 			// Ignore logging errors
 		}
+		*/
 	    ScopeContext.info(log,"load existing data from ["+datasourceName+"."+PREFIX+"_"+strType+"_data] to create "+strType+" scope for "+pc.getApplicationContext().getName()+"/"+pc.getCFID());
 
 	    return s;
@@ -163,6 +165,7 @@ public abstract class StorageScopeDatasource extends StorageScopeImpl {
 		setTimeSpan(pc);
 		super.touchAfterRequest(pc); 
 
+        /*
 		try {
 			System.out.println("StorageScopeDatasource.save() CFID=" + pc.getCFID()
 					+ " url=" + ((HttpServletRequest)pc.getRequest()).getRequestURI()
@@ -171,6 +174,7 @@ public abstract class StorageScopeDatasource extends StorageScopeImpl {
 		} catch (Exception ex) {
 			// swallow logging exception
 		}
+		*/
 		store(pc.getConfig());
 	}
 	
