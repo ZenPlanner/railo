@@ -419,19 +419,19 @@ public final class Query extends BodyTagTryCatchFinallyImpl {
 	*/
 	public int doEndTag() throws PageException	{
 
-		Scope id = pageContext.localScope();
+		Scope scope = pageContext.localScope();
         synchronized (reentrantMap) {
-            Long otherThread = reentrantMap.get(id);
+            Long otherThread = reentrantMap.get(scope);
             Long thisThread = Thread.currentThread().getId();
-            if (id instanceof LocalNotSupportedScope == false
+            if (scope instanceof LocalNotSupportedScope == false
                     && otherThread != null
                     && !otherThread.equals(thisThread)) {
-				System.out.println("Shared scope " + System.identityHashCode(id) +
-								" thisThreadId=" + Thread.currentThread().getId() +
-                                " otherThreadId=" + otherThread
+                System.out.println("Shared scope " + System.identityHashCode(scope) +
+                        " thisThreadId=" + thisThread +
+                        " otherThreadId=" + otherThread
                 );
             }
-			reentrantMap.put(pageContext.localScope(), Thread.currentThread().getId());
+            reentrantMap.put(scope, thisThread);
         }
 		//System.out.println("start localScopeId=" + id + " threadId=" + Thread.currentThread().getId());
 
@@ -572,7 +572,7 @@ public final class Query extends BodyTagTryCatchFinallyImpl {
             //System.out.println("end localScopeId=" + id + " threadId=" + Thread.currentThread().getId());
         } finally {
             synchronized (reentrantMap) {
-                reentrantMap.remove(id);
+                reentrantMap.remove(scope);
             }
         }
 		return EVAL_PAGE;
