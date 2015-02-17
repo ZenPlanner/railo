@@ -4,6 +4,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -36,11 +37,7 @@ import railo.runtime.op.Caster;
 import railo.runtime.op.Decision;
 import railo.runtime.op.Duplicator;
 import railo.runtime.type.Collection.Key;
-import railo.runtime.type.scope.Argument;
-import railo.runtime.type.scope.ArgumentIntKey;
-import railo.runtime.type.scope.ArgumentPro;
-import railo.runtime.type.scope.LocalImpl;
-import railo.runtime.type.scope.Undefined;
+import railo.runtime.type.scope.*;
 import railo.runtime.type.util.ComponentUtil;
 import railo.runtime.writer.BodyContentUtil;
 
@@ -48,14 +45,14 @@ import railo.runtime.writer.BodyContentUtil;
  * defines a abstract class for a User defined Functions
  */
 public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizable {
-	
+
 	private static final FunctionArgument[] EMPTY = new FunctionArgument[0];
-	
-	
-	
+
+
+
 	private ComponentImpl ownerComponent;
 	private UDFProperties properties;
-    
+
 
 	/**
 	 * @see railo.runtime.engine.Sizeable#sizeOf()
@@ -63,8 +60,8 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 	public long sizeOf() {
 		return SizeOf.size(properties);
 	}
-    
-	
+
+
 	/**
 	 * Constructor of the class
 	 * @param page
@@ -89,15 +86,15 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 	        Page page,
 	        FunctionArgument[] arguments,
 			int index,
-	        String functionName, 
-	        String strReturnType, 
-	        String strReturnFormat, 
-	        boolean output, 
-	        boolean async, 
-	        String strAccess, 
-	        String displayName, 
-	        String description, 
-	        String hint, 
+	        String functionName,
+	        String strReturnType,
+	        String strReturnFormat,
+	        boolean output,
+	        boolean async,
+	        String strAccess,
+	        String displayName,
+	        String description,
+	        String hint,
 	        Boolean secureJson,
 	        Boolean verifyClient,
 	        StructImpl meta) throws ExpressionException {
@@ -105,21 +102,21 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 		properties=new UDFProperties(page,
 		        arguments,
 				index,
-		        functionName, 
-		        strReturnType, 
-		        strReturnFormat, 
-		        output, 
-		         async, 
-		         getAccess(), 
-		         displayName, 
-		         description, 
-		         hint, 
+		        functionName,
+		        strReturnType,
+		        strReturnFormat,
+		        output,
+		         async,
+		         getAccess(),
+		         displayName,
+		         description,
+		         hint,
 		         secureJson,
 		         verifyClient,
 		         meta);
-		
+
 	}
-    
+
 	/**
 	 * Constructor of the class
 	 * @param page
@@ -144,15 +141,15 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 	        Page page,
 	        FunctionArgument[] arguments,
 			int index,
-	        String functionName, 
-	        short returnType, 
-	        String strReturnFormat, 
-	        boolean output, 
-	        boolean async, 
-	        String strAccess, 
-	        String displayName, 
-	        String description, 
-	        String hint, 
+	        String functionName,
+	        short returnType,
+	        String strReturnFormat,
+	        boolean output,
+	        boolean async,
+	        String strAccess,
+	        String displayName,
+	        String description,
+	        String hint,
 	        Boolean secureJson,
 	        Boolean verifyClient,
 	        StructImpl meta) throws ExpressionException {
@@ -161,21 +158,21 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 		        page,
 		        arguments,
 				index,
-		        functionName, 
-		        returnType, 
-		        strReturnFormat, 
-		        output, 
-		        async, 
-		        getAccess(), 
-		        displayName, 
-		        description, 
-		        hint, 
+		        functionName,
+		        returnType,
+		        strReturnFormat,
+		        output,
+		        async,
+		        getAccess(),
+		        displayName,
+		        description,
+		        hint,
 		        secureJson,
 		        verifyClient,
 		        meta);
 		//ownerComponent=null;
 	}
-	
+
 	/**
 	 * DO NOT USE THIS CONSTRUCTOR!
 	 * this constructor is only for deserialize process
@@ -183,7 +180,7 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 	public UDFImpl(){
 		super(0);
 	}
-	
+
 	public UDFImpl(UDFProperties properties) {
 		super(properties.getAccess());
 		this.properties=properties;
@@ -195,29 +192,29 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 		udf.setAccess(getAccess());
 		return udf;
 	}
-	
+
 	public UDF duplicate(boolean deepCopy) {
 		return duplicate(ownerComponent);
 	}
-	
+
 	public UDF duplicate() {
 		return duplicate(ownerComponent);
 	}
 
 	/**
-     * @throws Throwable 
+     * @throws Throwable
 	 * @see railo.runtime.type.UDF#implementation(railo.runtime.PageContext)
      */
 	public Object implementation(PageContext pageContext) throws Throwable {
-		
-		
-		
+
+
+
 		return ComponentUtil.getPage(pageContext, properties.pageSource).udfCall(pageContext,this,properties.index);
 	}
 
 	private final Object castToAndClone(PageContext pc,FunctionArgument arg,Object value, int index) throws PageException {
 		//if(value instanceof Array)print.out(count++);
-		if(Decision.isCastableTo(arg.getType(),arg.getTypeAsString(),value)) 
+		if(Decision.isCastableTo(arg.getType(),arg.getTypeAsString(),value))
 			return arg.isPassByReference()?value:Duplicator.duplicate(value,false);
 		throw new UDFCasterException(this,arg,value,index);
 		//REALCAST return Caster.castTo(pc,arg.getType(),arg.getTypeAsString(),value);
@@ -226,7 +223,7 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 		if(Decision.isCastableTo(arg.getType(),arg.getTypeAsString(),value)) return value;
 		throw new UDFCasterException(this,arg,value,index);
 	}
-	
+
 	private void defineArguments(PageContext pc,FunctionArgument[] funcArgs, Object[] args,ArgumentPro newArgs) throws PageException {
 		// define argument scope
 		for(int i=0;i<funcArgs.length;i++) {
@@ -237,7 +234,7 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 			// argument not defined
 			else {
 				Object d=getDefaultValue(pc,i);
-				if(d==null) { 
+				if(d==null) {
 					if(funcArgs[i].isRequired()) {
 						throw new ExpressionException("The parameter "+funcArgs[i].getName()+" to function "+getFunctionName()+" is required but was not passed in.");
 					}
@@ -253,48 +250,48 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 		}
 	}
 
-	
+
     private void defineArguments(PageContext pageContext, FunctionArgument[] funcArgs, Struct values, ArgumentPro newArgs) throws PageException {
     	// argumentCollection
     	argumentCollection(values,funcArgs);
     	//print.out(values.size());
     	Object value;
     	Collection.Key name;
-		
+
     	for(int i=0;i<funcArgs.length;i++) {
 			// argument defined
 			name=funcArgs[i].getName();
-			value=values.removeEL(name); 
+			value=values.removeEL(name);
 			if(value!=null) {
 				newArgs.set(name,castToAndClone(pageContext,funcArgs[i], value,i+1));
 				continue;
 			}
 			else {
-				value=values.removeEL(ArgumentIntKey.init(i+1)); 
+				value=values.removeEL(ArgumentIntKey.init(i+1));
 				if(value!=null) {
 					newArgs.set(name,castToAndClone(pageContext,funcArgs[i], value,i+1));
 					continue;
 				}
 			}
-			
+
 			// default argument or exception
 			Object defaultValue=getDefaultValue(pageContext,i);//funcArgs[i].getDefaultValue();
-			if(defaultValue==null) { 
+			if(defaultValue==null) {
 				if(funcArgs[i].isRequired()) {
 					throw new ExpressionException("The parameter "+funcArgs[i].getName()+" to function "+getFunctionName()+" is required but was not passed in.");
 				}
 				newArgs.set(name,ArgumentPro.NULL);
 			}
-			else newArgs.set(name,castTo(funcArgs[i],defaultValue,i+1));	
+			else newArgs.set(name,castTo(funcArgs[i],defaultValue,i+1));
 		}
-		
-		
+
+
 		Collection.Key[] arr=values.keys();
 		for(int i=0;i<arr.length;i++) {
 			newArgs.set(arr[i],values.get(arr[i],null));
 		}
 	}
-    
+
 
 	public static void argumentCollection(Struct values) {
 		argumentCollection(values,EMPTY);
@@ -304,7 +301,7 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 		Object value=values.removeEL(KeyImpl.ARGUMENT_COLLECTION);
 		if(value !=null) {
 			value=Caster.unwrap(value,value);
-			
+
 			if(value instanceof Argument) {
 				Argument argColl=(Argument) value;
 			    Collection.Key[] keys = argColl.keys();
@@ -312,7 +309,7 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 			    	if(funcArgs.length>i && keys[i] instanceof ArgumentIntKey) {
 	            		if(!values.containsKey(funcArgs[i].getName()))
 	            			values.setEL(funcArgs[i].getName(),argColl.get(keys[i],ArgumentPro.NULL));
-	            		else 
+	            		else
 	            			values.setEL(keys[i],argColl.get(keys[i],ArgumentPro.NULL));
 			    	}
 	            	else if(!values.containsKey(keys[i])){
@@ -359,9 +356,9 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 		    else {
 		        values.setEL(KeyImpl.ARGUMENT_COLLECTION,value);
 		    }
-		} 
+		}
 	}
-	
+
 	public static Collection.Key toKey(Object obj) {
 		if(obj==null) return null;
 		if(obj instanceof Collection.Key) return (Collection.Key) obj;
@@ -369,6 +366,8 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 		if(str==null) return KeyImpl.init(obj.toString());
 		return KeyImpl.init(str);
 	}
+
+    public static Map<Scope, Long> reentrantMap = new HashMap<Scope, Long>();
 
 	/**
      * @see railo.runtime.type.UDF#callWithNamedValues(railo.runtime.PageContext, railo.runtime.type.Struct, boolean)
@@ -383,83 +382,110 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
     public Object call(PageContext pc, Object[] args, boolean doIncludePath) throws PageException {
     	return _call(pc, args,null, doIncludePath);
     }
-   // private static int count=0;
-    private Object _call(PageContext pc, Object[] args, Struct values,boolean doIncludePath) throws PageException {
-    	//print.out(count++);
-    	PageContextImpl pci=(PageContextImpl) pc;
-        ArgumentPro newArgs=(ArgumentPro) pci.getScopeFactory().getArgumentInstance();// FUTURE
-        newArgs.setFunctionArgumentNames(properties.argumentsSet);
-        LocalImpl newLocal=pci.getScopeFactory().getLocalInstance();
-        
-		Undefined 	undefined=pc.undefinedScope();
-		Argument	oldArgs=pc.argumentsScope();
-        Scope		oldLocal=pc.localScope();
-        
-		pci.setFunctionScopes(newLocal,newArgs);
-		int oldCheckArgs=undefined.setMode(((ApplicationContextPro)pc.getApplicationContext()).getLocalMode());
-		PageSource psInc=null;
-		try {
-			PageSource ps = getPageSource();
-			if(doIncludePath)psInc = ps;
-			//if(!ps.getDisplayPath().endsWith("Dump.cfc"))print.e(getPageSource().getDisplayPath());
-			if(doIncludePath && getOwnerComponent()!=null) {
-				//if(!ps.getDisplayPath().endsWith("Dump.cfc"))print.ds(ps.getDisplayPath());
-				psInc=ComponentUtil.getPageSource(getOwnerComponent());
-				if(psInc==pci.getCurrentTemplatePageSource()) {
-					psInc=null;
-				}
-				
-			}
-			
-			
-			
-			
-			pci.addPageSource(ps,psInc);
+
+    // private static int count=0;
+    private Object _call(PageContext pc, Object[] args, Struct values, boolean doIncludePath) throws PageException {
+        //print.out(count++);
+        // Database.getQuery
+        if (getOwnerComponent() != null &&
+                "Database".equalsIgnoreCase(getOwnerComponent().getName()) &&
+                "getQuery".equalsIgnoreCase(getFunctionName())) {
+            String txt = getOwnerComponent().getName() + "." + getFunctionName() + "(";
+            if (pc.argumentsScope().containsKey("class")) {
+                txt += pc.argumentsScope().get("class");
+            }
+            txt += ")";
+            System.out.println(txt);
+        }
+        Scope scope;
+        synchronized (reentrantMap) {
+            scope = pc.localScope();
+            Long otherThread = reentrantMap.get(scope);
+            Long thisThread = Thread.currentThread().getId();
+            if (scope instanceof LocalNotSupportedScope == false
+                    && otherThread != null
+                    && !otherThread.equals(thisThread)) {
+                System.out.println("Shared scope " + System.identityHashCode(scope) +
+                                " thisThreadId=" + thisThread +
+                                " otherThreadId=" + otherThread
+                );
+            }
+            reentrantMap.put(scope, thisThread);
+        }
+        try {
+            PageContextImpl pci = (PageContextImpl) pc;
+            ArgumentPro newArgs = (ArgumentPro) pci.getScopeFactory().getArgumentInstance();// FUTURE
+            newArgs.setFunctionArgumentNames(properties.argumentsSet);
+            LocalImpl newLocal = pci.getScopeFactory().getLocalInstance();
+
+            Undefined undefined = pc.undefinedScope();
+            Argument oldArgs = pc.argumentsScope();
+            Scope oldLocal = pc.localScope();
+
+            pci.setFunctionScopes(newLocal, newArgs);
+            int oldCheckArgs = undefined.setMode(((ApplicationContextPro) pc.getApplicationContext()).getLocalMode());
+            PageSource psInc = null;
+            try {
+                PageSource ps = getPageSource();
+                if (doIncludePath) psInc = ps;
+                //if(!ps.getDisplayPath().endsWith("Dump.cfc"))print.e(getPageSource().getDisplayPath());
+                if (doIncludePath && getOwnerComponent() != null) {
+                    //if(!ps.getDisplayPath().endsWith("Dump.cfc"))print.ds(ps.getDisplayPath());
+                    psInc = ComponentUtil.getPageSource(getOwnerComponent());
+                    if (psInc == pci.getCurrentTemplatePageSource()) {
+                        psInc = null;
+                    }
+
+                }
+
+
+                pci.addPageSource(ps, psInc);
 //////////////////////////////////////////
-			BodyContent bc =  (getOutput()?null:pci.pushBody());
-		    //boolean isC=ownerComponent!=null;
-		    
-		    UDF parent=null;
-		    if(ownerComponent!=null) {
-			    parent=pci.getActiveUDF();
-			    pci.setActiveUDF(this);
-		    }
-		    Object returnValue = null;
-		    
-		    try {
-		    	
-		    	if(args!=null)	defineArguments(pc,getFunctionArguments(),args,newArgs);
-				else 			defineArguments(pc,getFunctionArguments(),values,newArgs);
-		    	
-				returnValue=implementation(pci);
-				if(ownerComponent!=null)pci.setActiveUDF(parent);
-			}
-	        catch(Throwable t) {
-	        	if(ownerComponent!=null)pci.setActiveUDF(parent);
-	        	BodyContentUtil.flushAndPop(pc,bc);
-	        	throw Caster.toPageException(t);
-	        }
-	        BodyContentUtil.clearAndPop(pc,bc);
-	        //pc.popBody();
-			
-	        
-	        
-	        
-	        if(properties.returnType==CFTypes.TYPE_ANY) return returnValue;
-	        else if(Decision.isCastableTo(properties.strReturnType,returnValue,false)) return returnValue;
-	        else throw new UDFCasterException(this,properties.strReturnType,returnValue);
-			//REALCAST return Caster.castTo(pageContext,returnType,returnValue,false);
+                BodyContent bc = (getOutput() ? null : pci.pushBody());
+                //boolean isC=ownerComponent!=null;
+
+                UDF parent = null;
+                if (ownerComponent != null) {
+                    parent = pci.getActiveUDF();
+                    pci.setActiveUDF(this);
+                }
+                Object returnValue = null;
+
+                try {
+
+                    if (args != null) defineArguments(pc, getFunctionArguments(), args, newArgs);
+                    else defineArguments(pc, getFunctionArguments(), values, newArgs);
+
+                    returnValue = implementation(pci);
+                    if (ownerComponent != null) pci.setActiveUDF(parent);
+                } catch (Throwable t) {
+                    if (ownerComponent != null) pci.setActiveUDF(parent);
+                    BodyContentUtil.flushAndPop(pc, bc);
+                    throw Caster.toPageException(t);
+                }
+                BodyContentUtil.clearAndPop(pc, bc);
+                //pc.popBody();
+
+
+                if (properties.returnType == CFTypes.TYPE_ANY) return returnValue;
+                else if (Decision.isCastableTo(properties.strReturnType, returnValue, false)) return returnValue;
+                else throw new UDFCasterException(this, properties.strReturnType, returnValue);
+                //REALCAST return Caster.castTo(pageContext,returnType,returnValue,false);
 //////////////////////////////////////////
-			
-		}
-		finally {
-			pc.removeLastPageSource(psInc!=null);
-            pci.setFunctionScopes(oldLocal,oldArgs);
-		    undefined.setMode(oldCheckArgs);
-            pci.getScopeFactory().recycle(newArgs);
-            pci.getScopeFactory().recycle(newLocal);
-		}
-	}
+
+            } finally {
+                pc.removeLastPageSource(psInc != null);
+                pci.setFunctionScopes(oldLocal, oldArgs);
+                undefined.setMode(oldCheckArgs);
+                pci.getScopeFactory().recycle(newArgs);
+                pci.getScopeFactory().recycle(newLocal);
+            }
+        } finally {
+            synchronized (reentrantMap) {
+                reentrantMap.remove(scope);
+            }
+        }
+    }
 
     /**
 	 * @see railo.runtime.dump.Dumpable#toDumpData(railo.runtime.PageContext, int)
@@ -469,15 +495,15 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 		return toDumpData(pageContext, maxlevel, dp,this);
 	}
 	public static DumpData toDumpData(PageContext pageContext, int maxlevel, DumpProperties dp,UDF udf) {
-	
+
 		if(!dp.getShowUDFs())
 			return new SimpleDumpData("<UDF>");
-		
+
 		// arguments
 		FunctionArgument[] args = udf.getFunctionArguments();
-        
+
         DumpTable atts = new DumpTablePro("udf","#9999cc","#ccccff","#000000");
-        
+
 		atts.appendRow(new DumpRow(63,new DumpData[]{new SimpleDumpData("label"),new SimpleDumpData("name"),new SimpleDumpData("required"),new SimpleDumpData("type"),new SimpleDumpData("default"),new SimpleDumpData("hint")}));
 		for(int i=0;i<args.length;i++) {
 			FunctionArgument arg=args[i];
@@ -501,29 +527,29 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 					def,
 					new SimpleDumpData(arg.getHint())}));
 			//atts.setRow(0,arg.getHint());
-			
+
 		}
-		
+
 		DumpTable func = new DumpTable("#9999cc","#ccccff","#000000");
 		String f="Function ";
 		try {
 			f=StringUtil.ucFirst(ComponentUtil.toStringAccess(udf.getAccess()).toLowerCase())+" "+f;
-		} 
+		}
 		catch (ExpressionException e) {}
 		func.setTitle(f+udf.getFunctionName());
 		if(udf instanceof UDFImpl)func.setComment("source:"+((UDFImpl)udf).getPageSource().getDisplayPath());
-		
-		
+
+
 		if(!StringUtil.isEmpty(udf.getDescription()))func.setComment(udf.getDescription());
-		
-		
-		
+
+
+
 		func.appendRow(1,new SimpleDumpData("arguments"),atts);
 		func.appendRow(1,new SimpleDumpData("return type"),new SimpleDumpData(udf.getReturnTypeAsString()));
-		
+
 		boolean hasLabel=!StringUtil.isEmpty(udf.getDisplayName());//displayName!=null && !displayName.equals("");
 		boolean hasHint=!StringUtil.isEmpty(udf.getHint());//hint!=null && !hint.equals("");
-		
+
 		if(hasLabel || hasHint) {
 			DumpTable box = new DumpTable("#ffffff","#cccccc","#000000");
 			box.setTitle(hasLabel?udf.getDisplayName():udf.getFunctionName());
@@ -531,7 +557,7 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 			box.appendRow(0,func);
 			return box;
 		}
-		
+
 		return func;
 	}
 	/**
@@ -554,7 +580,7 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
     	throw new PageRuntimeException(new DeprecatedException("method getPage():Page is no longer suppoted, use instead getPageSource():PageSource"));
         //return properties.page;
     }
-    
+
     // FUTURE add to interface
     public PageSource getPageSource() {
         return properties.pageSource;
@@ -563,12 +589,12 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 	public Struct getMeta() {
 		return properties.meta;
 	}
-	
+
 	public Struct getMetaData(PageContext pc) throws PageException {
 		return ComponentUtil.getMetaData(pc, properties);
 		//return getMetaData(pc, this);
 	}
-	
+
 	/*public static Struct getMetaData(PageContext pc,UDFImpl udf) throws PageException {
 		StructImpl func=new StructImpl();
         
@@ -641,13 +667,13 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 
 	/**
 	 * @param componentImpl the componentImpl to set
-	 * @param injected 
+	 * @param injected
 	 */
 	public void setOwnerComponent(ComponentImpl component) {
 		//print.err("setOwnerComponent("+this.hashCode()+"-"+component.hashCode()+"):"+component.getPage().getPageSource().getDisplayPath());
 		this.ownerComponent = component;
 	}
-	
+
 	/**
 	 * @see railo.runtime.type.UDF#getOwnerComponent()
 	// FUTURE deprecated
@@ -655,7 +681,7 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 	public Component getOwnerComponent() {
 		return ownerComponent;//+++
 	}
-	
+
 
 	public String toString() {
 		StringBuffer sb=new StringBuffer(properties.functionName);
@@ -701,14 +727,14 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 	}
 
 
-	
+
 	/**
      * @see railo.runtime.type.UDF#getFunctionArguments()
      */
     public FunctionArgument[] getFunctionArguments() {
         return properties.arguments;
     }
-	
+
 	/**
      * @see railo.runtime.type.UDF#getDefaultValue(railo.runtime.PageContext, int)
      */
@@ -737,38 +763,38 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 	public int getReturnType() {
 		return properties.returnType;
 	}
-	
+
 	/**
 	 * @see railo.runtime.type.UDF#getReturnTypeAsString()
 	 */
 	public String getReturnTypeAsString() {
 		return properties.strReturnType;
 	}
-	
+
 	/**
 	 * @see railo.runtime.type.UDF#getDescription()
 	 */
 	public String getDescription() {
 		return properties.description;
 	}
-	
+
 	/**
 	 * @see railo.runtime.type.UDF#getReturnFormat()
 	 */
 	public int getReturnFormat() {
 		return properties.returnFormat;
 	}
-	
+
 	public final String getReturnFormatAsString() {
 		return properties.strReturnFormat;
 	}
-	
-	
+
+
 	public static int toReturnFormat(String returnFormat) throws ExpressionException {
 		if(StringUtil.isEmpty(returnFormat,true))
 			return UDF.RETURN_FORMAT_WDDX;
-			
-			
+
+
 		returnFormat=returnFormat.trim().toLowerCase();
 		if("wddx".equals(returnFormat))				return UDF.RETURN_FORMAT_WDDX;
 		else if("json".equals(returnFormat))		return UDF.RETURN_FORMAT_JSON;
@@ -785,8 +811,8 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 		else if(RETURN_FORMAT_SERIALIZE==returnFormat)	return "serialize";
 		else throw new ExpressionException("invalid returnFormat definition, valid values are [wddx,plain,json,serialize]");
 	}
-	
-	
+
+
 	// FUTURE move to interface
 	public static String toReturnFormat(int returnFormat,String defaultValue) {
 		if(RETURN_FORMAT_WDDX==returnFormat)		return "wddx";
@@ -799,7 +825,7 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		// access
 		setAccess(in.readInt());
-		
+
 		// properties
 		properties=(UDFProperties) in.readObject();
 	}
@@ -808,13 +834,13 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 	public void writeExternal(ObjectOutput out) throws IOException {
 		// access
 		out.writeInt(getAccess());
-		
+
 		// properties
 		out.writeObject(properties);
-		
-		
+
+
 	}
 
-	
+
 }
 
