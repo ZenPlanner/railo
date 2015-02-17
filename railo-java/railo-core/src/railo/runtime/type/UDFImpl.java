@@ -385,21 +385,8 @@ public class UDFImpl extends MemberSupport implements UDF,Sizeable,Externalizabl
 
     // private static int count=0;
     private Object _call(PageContext pc, Object[] args, Struct values, boolean doIncludePath) throws PageException {
-        //print.out(count++);
-        // Database.getQuery
-        if (getOwnerComponent() != null &&
-                "Database".equalsIgnoreCase(getOwnerComponent().getName()) &&
-                "getQuery".equalsIgnoreCase(getFunctionName())) {
-            String txt = getOwnerComponent().getName() + "." + getFunctionName() + "(";
-            if (pc.argumentsScope().containsKey("class")) {
-                txt += pc.argumentsScope().get("class");
-            }
-            txt += ")";
-            System.out.println(txt);
-        }
-        Scope scope;
+        Scope scope = pc.localScope();
         synchronized (reentrantMap) {
-            scope = pc.localScope();
             Long otherThread = reentrantMap.get(scope);
             Long thisThread = Thread.currentThread().getId();
             if (scope instanceof LocalNotSupportedScope == false
