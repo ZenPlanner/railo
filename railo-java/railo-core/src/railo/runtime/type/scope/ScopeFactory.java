@@ -2,6 +2,9 @@ package railo.runtime.type.scope;
 
 import railo.runtime.type.Scope;
 
+import java.util.HashSet;
+import java.util.Set;
+
 
 /**
  * creates Local and Argument scopes and recyle it
@@ -61,7 +64,13 @@ public final class ScopeFactory {
             new LocalImpl(),
             new LocalImpl()
     };
-	private static int count=0;
+    Set<Scope> ownedScopes = new HashSet<Scope>();
+
+    public ScopeFactory() {
+        for(LocalImpl scope : locals) {
+            ownedScopes.add(scope);
+        }
+    }
     
     /**
      * @return returns a Argument scope
@@ -92,13 +101,23 @@ public final class ScopeFactory {
         arguments[--argumentCounter]=argument;
     }
 
+    int negLogCount = 0;
+
     /**
      * @param local recycle a Local scope for reuse
      */
     public void recycle(LocalImpl local) {
-        if(localCounter<=0  || local.isBind()) return;
+        if(negLogCount < 10 && localCounter <= 0) {
+            System.out.println("Released scope with counter at " + localCounter);
+            negLogCount++; // Don't kill the server with a million of these
+        }
+        if(!ownedScopes.contains(local)) {
+            System.out.println("Releasing a scope not owned by this ScopeFactory!");
+        }
+        if (localCounter <= 0 || local.isBind())
+            return;
         local.release();
-        locals[--localCounter]=local;
+        locals[--localCounter] = local;
     }
     
     /**
