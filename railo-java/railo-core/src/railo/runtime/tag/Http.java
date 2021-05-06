@@ -1443,17 +1443,20 @@ class Executor extends Thread {
 		this.httpMethod=httpMethod;
 		this.redirect=redirect;
 	}
-	
+
 
 	public void run(){
 		try {
 			execute();
 			done=true;
-			synchronized(http){
-				http.notify();
-			}
+
 		} catch (Throwable t) {
 			this.t=t;
+		}
+		finally {
+			synchronized (http) {
+				http.notify();
+			}
 		}
 	}
 	
