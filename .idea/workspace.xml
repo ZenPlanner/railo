@@ -2,7 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="daf86ebc-1fe2-45ba-80ef-6163cfd27a8c" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/railo-java/railo-core/src/railo/runtime/tag/Http.java" beforeDir="false" afterPath="$PROJECT_DIR$/railo-java/railo-core/src/railo/runtime/tag/Http.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../railo-code-builder/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../railo-code-builder/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/railo-java/railo-core/build.properties" beforeDir="false" afterPath="$PROJECT_DIR$/railo-java/railo-core/build.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/railo-java/railo-core/src/railo/runtime/Info.ini" beforeDir="false" afterPath="$PROJECT_DIR$/railo-java/railo-core/src/railo/runtime/Info.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/railo-java/railo-core/src/railo/runtime/type/scope/storage/StorageScopeDatasource.java" beforeDir="false" afterPath="$PROJECT_DIR$/railo-java/railo-core/src/railo/runtime/type/scope/storage/StorageScopeDatasource.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/railo-java/railo-core/src/resource/context/railo-context.ra" beforeDir="false" afterPath="$PROJECT_DIR$/railo-java/railo-core/src/resource/context/railo-context.ra" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -31,7 +37,7 @@
     </dirStrings>
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../railo-code-builder" />
   </component>
   <component name="GitSEFilterConfiguration">
     <file-type-list>
@@ -225,6 +231,19 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration default="true" type="ArquillianTestNG" factoryName="" nameIsGenerated="true">
+      <option name="arquillianRunConfiguration">
+        <value>
+          <option name="containerStateName" value="" />
+        </value>
+      </option>
+      <option name="TEST_OBJECT" value="CLASS" />
+      <properties />
+      <listeners />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration default="true" type="JUnit" factoryName="JUnit">
       <option name="TEST_OBJECT" value="class" />
       <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
@@ -264,7 +283,7 @@
       <updated>1526574541935</updated>
       <workItem from="1526574545725" duration="3454000" />
       <workItem from="1620250274644" duration="17823000" />
-      <workItem from="1620341588831" duration="64000" />
+      <workItem from="1620341588831" duration="1164000" />
     </task>
     <servers />
   </component>

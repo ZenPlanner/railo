@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/railo.iml" filepath="$PROJECT_DIR$/.idea/railo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../railo-code-builder/railo-code-builder.iml" filepath="$PROJECT_DIR$/../railo-code-builder/railo-code-builder.iml" />
     </modules>
   </component>
 </project>

@@ -50,6 +50,7 @@ public abstract class StorageScopeDatasource extends StorageScopeImpl {
 
 	private String cfid;
 	
+	private long requestStartTime=0;
 	
 	/**
 	 * Constructor of the class
@@ -70,6 +71,8 @@ public abstract class StorageScopeDatasource extends StorageScopeImpl {
 		this.datasourceName=datasourceName; 
 		appName=pc.getApplicationContext().getName();
 		cfid=pc.getCFID();
+		 
+		requestStartTime = (pc.getStartTime() != 0)?pc.getStartTime():System.currentTimeMillis();
 	}
 
 	/**
@@ -163,13 +166,13 @@ public abstract class StorageScopeDatasource extends StorageScopeImpl {
 		DatasourceConnectionPool pool = ci.getDatasourceConnectionPool();
 		try {
 			dc=pool.getDatasourceConnection(null,config.getDataSource(datasourceName),null,null);
-			int recordsAffected = executeUpdate(config,dc.getConnection(),"update "+PREFIX+"_"+getTypeAsString()+"_data set expires=?,data=? where cfid=? and name=?",false);
+			int recordsAffected = executeUpdate(config,dc.getConnection(),"update "+PREFIX+"_"+getTypeAsString()+"_data set expires=?,data=?, timecreated="+ requestStartTime+" where cfid=? and name=? and timecreated<="+requestStartTime,false);
 		    if(recordsAffected>1) {
 		    	executeUpdate(config,dc.getConnection(),"delete from "+PREFIX+"_"+getTypeAsString()+"_data where cfid=? and name=?",true);
 		    	recordsAffected=0;
 		    }
 		    if(recordsAffected==0) {
-		    	executeUpdate(config,dc.getConnection(),"insert into "+PREFIX+"_"+getTypeAsString()+"_data (expires,data,cfid,name) values(?,?,?,?)",false);
+		    	executeUpdate(config,dc.getConnection(),"insert into "+PREFIX+"_"+getTypeAsString()+"_data (expires,data,cfid,name,timecreated) values(?,?,?,?,"+requestStartTime+")",false);
 		    }
 
 		} 
@@ -199,6 +202,7 @@ public abstract class StorageScopeDatasource extends StorageScopeImpl {
 
 	private int executeUpdate(Config config,Connection conn, String strSQL, boolean ignoreData) throws SQLException, PageException, ConverterException {
 		//String appName = pc.getApplicationContext().getName();
+		//Expires & Timecreated should be BIGINT's but BIGINT isnt implimented in the Types interface
 		SQLImpl sql = new SQLImpl(strSQL,new SQLItem[]{
 				new SQLItemImpl(createExpires(getTimeSpan(), config),Types.VARCHAR),
 				new SQLItemImpl(new ScriptConverter().serializeStruct(sct,ignoreSet),Types.VARCHAR),
@@ -259,7 +263,8 @@ public abstract class StorageScopeDatasource extends StorageScopeImpl {
 			sb.append(PREFIX+"_"+type+"_data (");
 			
 			// expires
-			sb.append("expires varchar(64) NOT NULL, ");
+			sb.append("expires bigint NOT NULL, ");
+			sb.append("timecreated bigint NOT NULL, ");
 			// cfid
 			sb.append("cfid varchar(64) NOT NULL, ");
 			// name
